@@ -1,4 +1,5 @@
 use super::components::options::ComponentsAlgorithmOptions;
+use super::edge::DirectedVehicleSpecificEdgeInformation;
 pub use super::edge::Edge;
 pub use super::node::Node;
 use super::edgeinformation::EdgeInformation;
@@ -13,7 +14,7 @@ use std::rc::Rc;
 pub trait Graph {
     //mut functions:
     fn add_node(&mut self, node: Node);
-    fn add_edge(&mut self, edge: Edge);
+    fn add_edge(&mut self, base_node:i32, adj_node: i32,  edge: Edge);
     fn keep_nodes(&mut self, nodes: &HashSet<i32>);
 
     //simple non mut functions
@@ -28,7 +29,7 @@ pub trait Graph {
 
     fn do_for_all_neighbors<F>(&self, base_node: i32, reverse: bool, f: F)
     where
-        F: FnMut(i32, &Rc<Edge>); //TODO this needs to become independent of actual edge storage
+        F: FnMut(i32, Rc<DirectedVehicleSpecificEdgeInformation>);
 
     fn route(&self, opts: &RoutingAlgorithmOptions<Self>, start: i32, end: i32) -> Option<RoutingResult>
     where

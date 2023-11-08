@@ -1,4 +1,5 @@
 use super::components::options::ComponentsAlgorithmOptions;
+use super::edge::DirectedVehicleSpecificEdgeInformation;
 pub use super::edge::Edge;
 pub use super::node::Node;
 use super::graph::Graph;
@@ -39,38 +40,6 @@ impl StandardGraph {
             reverse_neighbors: HashMap::new(),
         }
     }
-
-    pub fn new_from_sub_graph(graph: &Self, nodes: &HashSet<i32>) -> Self {
-        let mut ret = Self::new();
-
-        let mut node_map = HashMap::new();
-        let mut node_counter = 0;
-        for i in 0..graph.get_nr_nodes() {
-            if nodes.contains(&(i as i32)) {
-                node_map.insert(i, node_counter);
-                node_counter+=1;
-                
-                let node = graph.get_node(i as i32).copied().unwrap_or_default();
-                ret.add_node(node);
-            }
-        }
-
-        /*for node in nodes {
-            let node:i32 = *node;
-            graph.do_for_all_neighbors(node, false, |adj_node, edge| {
-                //also check if the reverse has been added already
-                //its also possible that there are multiple edges between two nodes so also check the normal order
-                if nodes.contains(&adj_node) {
-                    ret.add_edge(edge.clone())
-                }
-            })
-        }*/
-
-        //TODO go through all of the edges and filter
-        
-
-        ret
-    }
 }
 
 impl Graph for StandardGraph {
@@ -79,15 +48,26 @@ impl Graph for StandardGraph {
         self.nodes.push(node);
     }
 
-    fn add_edge(&mut self, edge: Edge) {
-        let edge_clone = Rc::new(edge);
-        edge_clone.apply_nodes(|base_node, adj_node| {
+    fn add_edge(&mut self, base_node:i32, adj_node: i32,  edge: Edge) {
+        let fwd = edge.is_forward(super::edge::VehicleTypes::Car);
+        let bwd = edge.is_backward(super::edge::VehicleTypes::Car);
+
+        let reverse_edge = Rc::new(edge.create_opposite());
+        let rc_edge = Rc::new(edge);
+
+        if fwd {
             let neighbors_for_node = self.neighbors.entry(base_node).or_default();
             let reverse_neighbors_for_node = self.reverse_neighbors.entry(adj_node).or_default();
-            
-            neighbors_for_node.insert(adj_node, Rc::clone(&edge_clone));
-            reverse_neighbors_for_node.insert(base_node, Rc::clone(&edge_clone));
-        });
+            neighbors_for_node.insert(adj_node, Rc::clone(&rc_edge));
+            reverse_neighbors_for_node.insert(base_node, Rc::clone(&reverse_edge));
+        }
+        
+        if bwd {
+            let neighbors_for_node = self.neighbors.entry(adj_node).or_default();
+            let reverse_neighbors_for_node = self.reverse_neighbors.entry(base_node).or_default();
+            neighbors_for_node.insert(base_node, Rc::clone(&reverse_edge));
+            reverse_neighbors_for_node.insert(adj_node, Rc::clone(&rc_edge));
+        }
     }
 
     fn keep_nodes(&mut self, nodes: &HashSet<i32>) { 
@@ -109,16 +89,14 @@ impl Graph for StandardGraph {
                 if !nodes.contains(&index) || !nodes.contains(&adj_node) {
                     remove_neighbors.push(adj_node); // we can't modify directly in here because we are also reading the neighbors in the func
                 }
-
-                //edge needs to be modified...........
             });
 
             for adj_node in remove_neighbors {
-                let remove = self.neighbors.get_mut(&index).is_some_and(|map| {map.remove(&adj_node); map.len()==0});
+                let remove = self.neighbors.get_mut(&index).is_some_and(|map| {map.remove(&adj_node); map.is_empty()});
                 if remove {
                     self.neighbors.remove(&index);
                 }
-                let remove = self.reverse_neighbors.get_mut(&adj_node).is_some_and(|map| {map.remove(&adj_node); map.len()==0});
+                let remove = self.reverse_neighbors.get_mut(&adj_node).is_some_and(|map| {map.remove(&adj_node); map.is_empty()});
                 if remove {
                     self.reverse_neighbors.remove(&index);
                 }
@@ -141,7 +119,7 @@ impl Graph for StandardGraph {
 
     fn do_for_all_neighbors<F>(&self, base_node: i32, reverse: bool, mut f: F)
     where
-        F: FnMut(i32, &Rc<Edge>),
+        F: FnMut(i32, Rc<DirectedVehicleSpecificEdgeInformation>),
     {
         let relevant_neighbors = if reverse {
             &self.reverse_neighbors
@@ -155,25 +133,22 @@ impl Graph for StandardGraph {
         };
 
         for (adj_node, edge) in neighbors {
-            f(*adj_node, edge);
+            let directed_edge_info = edge.get_directed_vehicle_specific_edge_information(super::edge::VehicleTypes::Car, reverse).unwrap();
+            f(*adj_node, directed_edge_info);
         }
     }
 
     fn get_directed_edge_between(&self, start: i32, end: i32) -> Option<Rc<EdgeInformation>> {
-        let edge_option = self.neighbors.get(&start);
+        let neighbors_option = self.neighbors.get(&start);
         
-        edge_option.map(|start_neighbors| {
-            let result_list = start_neighbors.iter().filter(|(adj_node,_)| **adj_node == end).collect::<Vec<_>>();
-            if !result_list.is_empty() {
-                let edge = result_list[0].1;
+        let edge_option = neighbors_option.and_then(|start_neighbors| start_neighbors.get(&end));
+        edge_option.map(|edge| {
+            let edge_info = edge.get_directed_vehicle_specific_edge_information(super::edge::VehicleTypes::Car, false).unwrap();
 
-                let actual_start_node = self.get_node(start).unwrap();
-                let actual_end_node = self.get_node(end).unwrap();
-            
-                Rc::new(EdgeInformation::new(Rc::clone(edge), end, actual_start_node.lat, actual_start_node.lon, actual_end_node.lat, actual_end_node.lon))
-            } else {
-                panic!("edge between {} and {} doesn't exist",start,end)
-            }           
+            let actual_start_node = self.get_node(start).unwrap();
+            let actual_end_node = self.get_node(end).unwrap();
+        
+            Rc::new(EdgeInformation::new(start, end, actual_start_node.lat, actual_start_node.lon, actual_end_node.lat, actual_end_node.lon, edge_info))
         })
     }
 
@@ -212,7 +187,7 @@ mod tests {
     use std::collections::HashSet;
 
     #[test]
-    fn internal() {
+    fn test_do_for_all_neighbors() {
         let mut graph = StandardGraph::new();
         graph.add_node(Node::default());
         graph.add_node(Node::default());
@@ -221,11 +196,11 @@ mod tests {
         graph.add_node(Node::default());
         graph.add_node(Node::default());
 
-        graph.add_edge(Edge::new(0, 1, 1.0, true, true));
-        graph.add_edge(Edge::new(0, 2, 1.0, true, true));
-        graph.add_edge(Edge::new(0, 3, 1.0, true, true));
-        graph.add_edge(Edge::new(1, 2, 1.0, true, true));
-        graph.add_edge(Edge::new(4, 5, 1.0, true, true));
+        graph.add_edge(0, 1, Edge::new(1.0, true, true));
+        graph.add_edge(0, 2, Edge::new(1.0, true, true));
+        graph.add_edge(0, 3, Edge::new(1.0, true, true));
+        graph.add_edge(1, 2, Edge::new(1.0, true, true));
+        graph.add_edge(4, 5, Edge::new(1.0, true, true));
 
         let mut adj_nodes=HashSet::new();
         graph.do_for_all_neighbors(2, false, |adj_node, _| {
@@ -238,5 +213,67 @@ mod tests {
             adj_nodes.insert(adj_node);
         });
         assert!(adj_nodes.len()==3 && adj_nodes.contains(&1) && adj_nodes.contains(&2) && adj_nodes.contains(&3),"adj nodes: {:?}",adj_nodes);
+    }
+
+     #[test]
+    fn test_edge_directions() {
+        let mut graph = StandardGraph::new();
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+
+        graph.add_edge(0, 1, Edge::new(1.0, true, false));
+        graph.add_edge(2, 3, Edge::new(1.0, false, true));
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(0, false, |adj_node, _| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&1),"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(0, true, |adj_node, _| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==0,"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(1, false, |adj_node, _| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==0,"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(1, true, |adj_node, _| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&0),"adj nodes: {:?}",adj_nodes);
+
+        //now test the edge in the other direction:
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(3, false, |adj_node, _| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&2),"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(3, true, |adj_node, _| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==0,"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(2, false, |adj_node, _| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==0,"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(2, true, |adj_node, _| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&3),"adj nodes: {:?}",adj_nodes);
     }
 }

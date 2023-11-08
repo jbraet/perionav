@@ -71,8 +71,8 @@ impl<'a> OsmReader<'a> {
                             if last_node!=-1 && curr_node!=-1 && self.node_types.get(&node_id).is_some_and(|x| matches!(x,NodeType::TowerNode)) {
                                 let dist = last_location.distance_to(&curr_location).unwrap().meters();
 
-                                let edge = Edge::new(last_node,curr_node,dist,*car_fwd,*car_bwd);
-                                g.add_edge(edge);
+                                let edge = Edge::new(dist,*car_fwd,*car_bwd);
+                                g.add_edge(last_node, curr_node, edge);
 
                                 last_node = curr_node;
                                 last_location = curr_location;

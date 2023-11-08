@@ -1,5 +1,5 @@
 use crate::core::Graph;
-use crate::core::edge::Edge;
+use crate::core::edge::DirectedVehicleSpecificEdgeInformation;
 use ordered_float::NotNan;
 use std::cmp::Ordering;
 use std::rc::Rc;
@@ -33,16 +33,14 @@ impl Ord for HeapEntry {
     }
 }
 
-pub fn create_edge_information(graph: &impl Graph, edge: Option<Rc<Edge>>, base_node: i32, adj_node: i32, reverse: bool) -> Option<Rc<EdgeInformation>> {
-    edge.map(|e| {
-        let actual_base_node = graph.get_node(base_node).unwrap();
-        let actual_adj_node = graph.get_node(base_node).unwrap();
-        if reverse {
-            Rc::new(EdgeInformation::new(e, base_node, actual_adj_node.lat,actual_adj_node.lon, actual_base_node.lat, actual_base_node.lon))
-        } else {
-            Rc::new(EdgeInformation::new(e, adj_node, actual_base_node.lat,actual_base_node.lon, actual_adj_node.lat, actual_adj_node.lon))
-        }
-    })
+pub fn create_edge_information(graph: &impl Graph, edge_info: Rc<DirectedVehicleSpecificEdgeInformation>, base_node: i32, adj_node: i32, reverse: bool) -> Option<Rc<EdgeInformation>> {    
+    let actual_base_node = graph.get_node(base_node).unwrap();
+    let actual_adj_node = graph.get_node(base_node).unwrap();
+    if reverse {
+        Some(Rc::new(EdgeInformation::new(adj_node, base_node, actual_adj_node.lat,actual_adj_node.lon, actual_base_node.lat, actual_base_node.lon, edge_info)))
+    } else {
+        Some(Rc::new(EdgeInformation::new(base_node, adj_node, actual_base_node.lat,actual_base_node.lon, actual_adj_node.lat, actual_adj_node.lon, edge_info)))
+    }
 }
 
 impl HeapEntry {

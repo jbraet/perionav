@@ -29,8 +29,8 @@ fn main() {
     for component in result {
         if component.len()>20 && component.len()<1000 {
             println!("component has size {}",component.len());
-            /*let visualisation = g.visualise_sub_graph(&component);
-            println!("{}",visualisation);*/
+            let visualisation = g.visualise_sub_graph(&component);
+            println!("{}",visualisation);
         }
     }
     

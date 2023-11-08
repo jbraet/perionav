@@ -66,11 +66,11 @@ impl<G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm {
                 break;
             }
 
-            graph.do_for_all_neighbors(index, false, |adj_node, edge| {
+            graph.do_for_all_neighbors(index, false, |adj_node, directed_edge_info| {
                 if !used.contains(&adj_node) {
                     //if dist(start->index) + dist(index->adj_node) < dist(start->adj_node)
                     let dist1 = *distances.get(&index).unwrap_or(&f64::INFINITY);
-                    let weight = &self.weight_calculator.calc_weight(edge, index);
+                    let weight = &self.weight_calculator.calc_weight(&directed_edge_info, index);
                     let dist2 = distances.entry(adj_node).or_insert(f64::INFINITY);
                     if dist1 + weight < *dist2 {
                         *dist2 = dist1 + weight;
@@ -79,8 +79,7 @@ impl<G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm {
                         let mut edge_info = None;
                         if self.path {
                             parent = Some(Rc::clone(&current_heap_entry));
-                            let edge_entry = Some(Rc::clone(edge));
-                            edge_info = create_edge_information(graph, edge_entry, index, adj_node, false);
+                            edge_info = create_edge_information(graph, directed_edge_info, index, adj_node, false);
                         }
                         let new_heap_entry = Rc::new(HeapEntry::new(*dist2, adj_node, edge_info , parent));
                         heap.push(new_heap_entry);

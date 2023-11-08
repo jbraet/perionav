@@ -24,11 +24,11 @@ struct AlgorithmData {
 }
 
 impl AlgorithmData {
-    pub fn new(graph: &impl Graph, start: i32) -> AlgorithmData {
+    pub fn new(start: i32) -> AlgorithmData {
         let mut distances: HashMap<i32, Rc<RefCell<HeapEntry>>> = HashMap::new();
         let mut heap = BinaryHeap::new();
 
-        let current_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph, 0.0, start, None, None)));
+        let current_heap_entry = Rc::new(RefCell::new(HeapEntry::new_without_parent(0.0, start)));
         heap.push(Rc::clone(&current_heap_entry));
         distances.insert(start, Rc::clone(&current_heap_entry));
 
@@ -46,7 +46,7 @@ impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
             mut distances,
             mut heap,
             mut current_heap_entry,
-        } = AlgorithmData::new(graph, start);
+        } = AlgorithmData::new(start);
 
         while !heap.is_empty() {
             current_heap_entry = heap.pop().unwrap(); //OK because of is_empty check above
@@ -60,32 +60,26 @@ impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
                 break;
             }
 
-            graph.do_for_all_neighbors(index, false, |adj_node, edge| {
+            graph.do_for_all_neighbors(index, false, |adj_node, directed_edge_info| {
                 let adj_heap_entry = distances.get(&adj_node);
 
                 let mut parent = None;
-                let mut edge_entry = None;
                 if self.path {
                     parent = Some(Rc::clone(&current_heap_entry));
-                    edge_entry = Some(Rc::clone(edge));
                 }
 
-                let weight = &self.weight_calculator.calc_weight(edge, index);
+                let weight = &self.weight_calculator.calc_weight(&directed_edge_info, index);
                 let dist2 = *current_heap_entry_borrowed.key + weight;
                 match adj_heap_entry {
                     None => {
-                        let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph,
-                            dist2, adj_node, edge_entry, parent,
-                        )));
+                        let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph, dist2, adj_node, directed_edge_info, parent)));
                         heap.push(Rc::clone(&new_heap_entry));
                         distances.insert(adj_node, Rc::clone(&new_heap_entry));
                     }
                     Some(adj_heap_entry) => {
                         if *adj_heap_entry.borrow().key > dist2 {
                             adj_heap_entry.borrow_mut().deleted = true;
-                            let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph,
-                                dist2, adj_node, edge_entry, parent,
-                            )));
+                            let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph, dist2, adj_node, directed_edge_info, parent)));
                             heap.push(new_heap_entry);
                         } //else do nothing
                     }

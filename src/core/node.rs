@@ -23,12 +23,8 @@ impl Default for Node {
 
 impl Copy for Node {}
 
-impl Clone for Node {
+impl Clone for Node { //TODO do we still need this ? 
     fn clone(&self) -> Self {
-        Node {
-            osm_id: self.osm_id,
-            lat: self.lat,
-            lon: self.lon,
-        }
+       *self
     }
 }

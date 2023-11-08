@@ -16,6 +16,7 @@ use std::borrow::BorrowMut;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::collections::hash_map::Entry;
 use std::rc::Rc;
 use std::vec;
 
@@ -125,20 +126,19 @@ impl BidirDijkstraRoutingAlgorithm {
                 return true;
             }
 
-            graph.do_for_all_neighbors(index, reverse, |adj_node, edge| {
+            graph.do_for_all_neighbors(index, reverse, |adj_node, directed_edge_info| {
                 if !data.used.contains(&adj_node) {
                     //if dist(start->index) + dist(index->adj_node) < dist(start->adj_node)
                     let dist1 = *data.distances.get(&index).map_or(&f64::INFINITY, |heap_entry| &heap_entry.key);
 
-                    let weight = &self.weight_calculator.calc_weight(edge, if !reverse {index} else {adj_node});
+                    let weight = &self.weight_calculator.calc_weight(&directed_edge_info, if !reverse {index} else {adj_node});
 
                     let mut create_new_heap_entry = || {
                         let mut parent = None;
                         let mut edge_info = None;
                         if self.path {
                             parent = Some(Rc::clone(&data.heap_entry));
-                            let edge_entry = Some(Rc::clone(edge));
-                            edge_info = create_edge_information(graph, edge_entry, index, adj_node, reverse);
+                            edge_info = create_edge_information(graph, directed_edge_info, index, adj_node, reverse);
                         }
 
                         let ret = Rc::new(HeapEntry::new(dist1 + weight, adj_node, edge_info, parent));
@@ -148,11 +148,16 @@ impl BidirDijkstraRoutingAlgorithm {
                         ret
                     };
 
-                    let dist2 = data.distances.entry(adj_node).and_modify(|e| {
-                        if dist1+weight < e.key.into_inner() {
-                            *e = create_new_heap_entry();
+                    match data.distances.entry(adj_node) {
+                        Entry::Vacant(mut entry) => {
+                            entry.insert(create_new_heap_entry());
                         }
-                    }).or_insert_with(create_new_heap_entry);
+                        Entry::Occupied(mut entry) => {
+                            if dist1+weight < entry.get().key.into_inner() {
+                                entry.insert(create_new_heap_entry());
+                            }
+                        }
+                    }
 
                     let other_heap_entry = other_data.distances.get(&adj_node);
                     let other_dist = other_heap_entry.map_or(&f64::INFINITY, |heap_entry| &heap_entry.key);

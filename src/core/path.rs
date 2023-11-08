@@ -7,7 +7,7 @@ pub struct Path {
     edges: Vec<Rc<EdgeInformation>>,
 } 
 
-impl Path {
+impl Path  {
     pub fn new(edges: Vec<Rc<EdgeInformation>>) -> Self {
         Path::check_edges_valid(&edges, None);
 
@@ -18,7 +18,7 @@ impl Path {
 
     pub fn add_edges(&mut self, edges: Vec<Rc<EdgeInformation>>) {
         let last_node = self.edges.last().map(|e| {
-            e.adj_node
+            e.get_adj_node()
         });
 
         Path::check_edges_valid(&edges, last_node);
@@ -35,7 +35,7 @@ impl Path {
                 }
             }
 
-            last_node = Some(edge.adj_node)
+            last_node = Some(edge.get_adj_node())
         }
     }
 
@@ -71,7 +71,7 @@ impl Path {
                 start = false;
             }
 
-            ret.push(edge_info.adj_node);
+            ret.push(edge_info.get_adj_node());
         }
 
         ret
