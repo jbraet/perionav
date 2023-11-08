@@ -5,56 +5,131 @@ use super::vehicle_permissions::*;
 
 use osmpbf::{ElementReader, Element};
 
-pub fn read_graph_from_osm(file: &str) -> Result<impl Graph,osmpbf::Error> {
-    let reader = ElementReader::from_path(file)?;
+use geoutils::Location;
 
-    let mut g = StandardGraph::new();
+enum NodeType {
+    TowerNode, //end of a way or the middle of a way that connects to another way
+    ShapeNode, //middle of a way that's just there for shape
 
-    let mut nodes_map = HashMap::new(); //map from osm id to node id in graph
-    let mut curr_node_index = 0; //the index inside the graph
+}
 
-    //TODO right now we make no distinction between tower nodes and normal nodes
-    //tower nodes are crossing points of different ways while normal nodes are just there for some shape, traffic signs, traffic crossings, barriers, ...
-    //implementing this should bring a decent performance gain since there will be less nodes to visit if normal nodes are ignored
+pub struct OsmReader<'a> {
+    file_name: &'a str,
 
+    node_types: HashMap<i64,NodeType>, //counts usages
+}
 
-    // ways always come after nodes
-    reader.for_each(|element| {
-        match element {
-            Element::Way(way) => {
+impl<'a> OsmReader<'a> {
+    pub fn new(file_name: &'a str) -> Result<Self,osmpbf::Error> {
+        let mut reader = OsmReader{
+            file_name,
+            node_types: HashMap::new(),
+        };
 
-                let tags_map = convert_tags_to_map(way.tags());
-                let (car_fwd, car_bwd)= is_car_allowed(&tags_map);
+        reader.categorize_nodes()?;
+        Ok(reader)
+    }
 
-                let mut last_node=-1;
-                if car_fwd || car_bwd {
-                    for r in way.refs() {
-                        let curr_node = *nodes_map.get(&r).unwrap_or(&-1);
+    pub fn read_graph(&self) -> Result<impl Graph,osmpbf::Error> {
+        let reader = ElementReader::from_path(self.file_name)?;
 
-                        if last_node==-1 {
-                            last_node=curr_node;
-                            continue
-                        }
+        let mut g = StandardGraph::new();
+        let mut curr_node_index = 0; //the index inside the graph
 
-                        if curr_node!=-1 {
-                            let edge = Edge::new(last_node,curr_node,1.0,car_fwd,car_bwd); //TODO distance is temporary
-                            g.add_edge(edge);
+        let mut nodes_map = HashMap::new();
+        let mut nr_ways = 0;
 
-                            last_node=curr_node;
-                        }
+        // ways always come after nodes
+        reader.for_each(|element| {
+            match element {
+                Element::Way(way) => {
+                    nr_ways+=1;
+
+                    let tags_map = convert_tags_to_map(way.tags());
+                    let (car_fwd, car_bwd)= is_car_allowed(&tags_map);
+
+                    if car_fwd || car_bwd {
+                        let mut last_node=-1;
+                        let mut last_location = Location::new(0,0);
+                        let mut curr_location = Location::new(0,0);
+
+                        let mut created_edges=0;
+
+                        for node_id in way.refs() {
+                            let curr_node = *nodes_map.get(&node_id).unwrap_or(&-1);
+
+                            let n=g.get_node(curr_node as usize);
+                            if let Some(n) = n {
+                                curr_location=Location::new(n.lat, n.lon);
+                            }
+
+                            if last_node==-1 && self.node_types.get(&node_id).is_some_and(|x| matches!(x,NodeType::TowerNode)) {
+                                last_node = curr_node;
+                                last_location = curr_location;
+                                
+                                continue
+                            }
+
+                            if last_node!=-1 && curr_node!=-1 && self.node_types.get(&node_id).is_some_and(|x| matches!(x,NodeType::TowerNode)) {
+                                let dist = last_location.distance_to(&curr_location).unwrap().meters();
+
+                                let edge = Edge::new(last_node,curr_node,dist,car_fwd,car_bwd);
+                                g.add_edge(edge);
+                                created_edges+=1;
+
+                                last_node=curr_node;
+                                last_location = curr_location;
+                            }
+                        }                        
                     }
-                }
-                
-            },
-            Element::Node(_) => {}
-            Element::DenseNode(node) => {
-                g.add_node(Node::new()); //TODO also store original id in the nodes
-                nodes_map.insert(node.id, curr_node_index);
-                curr_node_index+=1;
-            },
-            Element::Relation(_) => {}
-        }
-    })?;
+                    
+                },
+                Element::Node(_) => {}
+                Element::DenseNode(node) => {
+                    if self.node_types.get(&node.id).is_some_and(|x| matches!(x,NodeType::TowerNode)) {
+                        g.add_node(Node::new(node.id, node.lat(), node.lon()));
+                        nodes_map.insert(node.id, curr_node_index);
+                        curr_node_index+=1;
+                    }
+                },
+                Element::Relation(_) => {}
+            }
+        })?;
 
-    Result::Ok(g)
+        println!("nr ways parsed: {}",nr_ways);
+
+        Result::Ok(g)
+    }
+
+    pub fn categorize_nodes(&mut self) -> Result<(),osmpbf::Error> {
+        let reader = ElementReader::from_path(self.file_name)?;
+        
+        reader.for_each(|element| {
+            match element {
+                Element::Way(way) => {
+                    let mut first = true;
+                    let mut last = -1;
+
+                    for node_id in way.refs() {
+                        if first{
+                            self.node_types.insert(node_id,NodeType::TowerNode);
+                            first = false;
+                        }
+
+                        self.node_types.entry(node_id).and_modify(|e| *e = NodeType::TowerNode).or_insert(NodeType::ShapeNode);
+                        last = node_id;
+                    }
+
+                    if last!=-1 {
+                        self.node_types.insert(last, NodeType::TowerNode);
+                    }
+                },
+                Element::Node(_) => {}
+                Element::DenseNode(_) => {},
+                Element::Relation(_) => {}
+            }
+        })?;
+
+        Ok(())
+    }
 }

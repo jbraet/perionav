@@ -6,6 +6,9 @@ use super::routing::RoutingResult;
 use super::routingoptions::AlgorithmOptions;
 pub use super::weight::WeightCalculator;
 
+use kdtree::KdTree;
+use kdtree::distance::squared_euclidean;
+
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::vec;
@@ -13,6 +16,7 @@ use std::fmt;
 
 pub struct StandardGraph {
     nodes: Vec<Node>,
+    kdtree: KdTree<f64,i32,[f64;2]>, //last type param are the coordinates, second is the extra data stored and the first is just to clarify the third or something
     neighbors: HashMap<i32, Vec<Rc<Edge>>>, //node index to coinciding edges
     reverse_neighbors: HashMap<i32,Vec<Rc<Edge>>>,  //probably not the most efficient implementation, but create a graph2 and benchmark
 }
@@ -26,6 +30,7 @@ impl Default for StandardGraph {
 impl StandardGraph {
     pub fn new() -> Self {
         StandardGraph {
+            kdtree: KdTree::new(2),
             nodes: vec![],
             neighbors: HashMap::new(),
             reverse_neighbors: HashMap::new(),
@@ -35,6 +40,7 @@ impl StandardGraph {
 
 impl Graph for StandardGraph {
     fn add_node(&mut self, node: Node) {
+        self.kdtree.add([node.lat, node.lon], self.nodes.len() as i32).unwrap();
         self.nodes.push(node);
     }
 
@@ -47,6 +53,15 @@ impl Graph for StandardGraph {
             neighbors_for_node.push(Rc::clone(&edge_clone));
             reverse_neighbors_for_node.push(Rc::clone(&edge_clone));
         });
+    }
+
+    fn get_node(&self,id: usize) -> Option<&Node> {
+        self.nodes.get(id)
+    }
+
+    fn find_closest_node(&self, lat: f64, lon: f64) -> i32 {
+        let kd_nodes = self.kdtree.nearest(&[lat, lon], 1, &squared_euclidean).unwrap();
+        *kd_nodes[0].1
     }
 
     fn do_for_all_neighbors<F>(&self, base_node: i32, reverse: bool, mut f: F)
@@ -66,6 +81,7 @@ impl Graph for StandardGraph {
 
         for edge in neighbors {
             let adj_node = edge.get_adj_node(base_node);
+
             f(adj_node, edge);
         }
     }
@@ -77,8 +93,11 @@ impl Graph for StandardGraph {
             let result_list = start_neighbors.iter().filter(|e| e.get_adj_node(start) == end).collect::<Vec<_>>();
             if !result_list.is_empty() {
                 let edge = result_list[0];
+
+                let actual_start_node = self.get_node(start as usize).unwrap();
+                let actual_end_node = self.get_node(end as usize).unwrap();
             
-                Rc::new(EdgeInformation::new(Rc::clone(edge),end))
+                Rc::new(EdgeInformation::new(Rc::clone(edge), end, actual_start_node.lat, actual_start_node.lon, actual_end_node.lat, actual_end_node.lon))
             } else {
                 panic!("edge between {} and {} doesn't exist",start,end)
             }           

@@ -1,3 +1,4 @@
+use crate::core::Graph;
 use crate::core::edge::Edge;
 use ordered_float::NotNan;
 use std::cmp::Ordering;
@@ -32,9 +33,15 @@ impl Ord for HeapEntry {
     }
 }
 
-pub fn create_edge_information(edge: Option<Rc<Edge>>, base_node: i32, adj_node: i32, reverse: bool) -> Option<Rc<EdgeInformation>> {
+pub fn create_edge_information(graph: &impl Graph, edge: Option<Rc<Edge>>, base_node: i32, adj_node: i32, reverse: bool) -> Option<Rc<EdgeInformation>> {
     edge.map(|e| {
-        Rc::new(EdgeInformation::new(e, if !reverse{adj_node} else {base_node}))
+        let actual_base_node = graph.get_node(base_node as usize).unwrap();
+        let actual_adj_node = graph.get_node(base_node as usize).unwrap();
+        if reverse {
+            Rc::new(EdgeInformation::new(e, base_node, actual_adj_node.lat,actual_adj_node.lon, actual_base_node.lat, actual_base_node.lon))
+        } else {
+            Rc::new(EdgeInformation::new(e, adj_node, actual_base_node.lat,actual_base_node.lon, actual_adj_node.lat, actual_adj_node.lon))
+        }
     })
 }
 

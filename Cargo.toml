@@ -1,6 +1,6 @@
 [package]
 name = "perionav"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 
 [dependencies]
@@ -8,6 +8,8 @@ ordered-float = "4.1.0"
 rand = "0.8.5"
 osmpbf = "0.2"
 lazy_static = "1.4.0"
+kdtree = "0.7.0"
+geoutils = "0.5.1"
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }

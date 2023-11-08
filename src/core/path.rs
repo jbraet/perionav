@@ -39,9 +39,31 @@ impl Path {
         }
     }
 
+    pub fn get_wkt(&self) -> String {
+        let mut first=false;
+        let res = self.edges.iter().fold(vec![],|mut acc, e| {
+            if first {
+                let (from_lat, from_lon) = e.get_from_coordinates();
+                acc.push(format!("{:.6} {:.6}",from_lon, from_lat)); //WKT uses lon lat
+
+                first= false;
+            }
+
+            let (to_lat, to_lon) = e.get_to_coordinates();
+
+            acc.push(format!("{:.6} {:.6}",to_lon, to_lat)); //WKT uses lon lat
+
+            acc
+        });
+
+
+        format!("LINESTRING({})",res.join(","))
+    }
+
     pub fn get_nodes(&self) -> Vec<i32> {
         let mut ret = vec![];
         let mut start = true;
+        
         for edge_info in &self.edges {
             if start {
                 let base_node = edge_info.get_base_node();

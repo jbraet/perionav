@@ -12,7 +12,7 @@ pub fn create_random_graph(nodes: i32, edges: i32) -> impl Graph {
     let prob_one_way = 0.2;
 
     for _ in 0..nodes {
-        g.add_node(Node::new());
+        g.add_node(Node::default());
     }
 
     let mut rng = StdRng::seed_from_u64(42);
@@ -29,13 +29,13 @@ pub fn create_random_graph(nodes: i32, edges: i32) -> impl Graph {
 
 pub fn create_complex_graph() -> impl Graph {
     let mut g = StandardGraph::new();
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
 
     g.add_edge(Edge::new(0, 1, 4.0, true, true));
     g.add_edge(Edge::new(0, 4, 2.0, true, true));
@@ -52,10 +52,10 @@ pub fn create_complex_graph() -> impl Graph {
 
 pub fn create_ii_graph() -> impl Graph {
     let mut g = StandardGraph::new();
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
 
     let edge1 = Edge::new(0, 1, 1.0, true, true);
     let edge2 = Edge::new(2, 3, 1.0, true, true);
@@ -67,9 +67,9 @@ pub fn create_ii_graph() -> impl Graph {
 
 pub fn create_k3_graph() -> impl Graph {
     let mut g = StandardGraph::new();
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
 
     let edge1 = Edge::new(0, 1, 1.0, true, true);
     let edge2 = Edge::new(0, 2, 1.0, true, true);
@@ -84,10 +84,10 @@ pub fn create_k3_graph() -> impl Graph {
 
 pub fn create_square_graph() -> impl Graph {
     let mut g = StandardGraph::new();
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
 
     let edge1 = Edge::new(0, 1, 1.0, true, true);
     let edge2 = Edge::new(1, 2, 1.0, true, true);

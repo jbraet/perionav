@@ -78,7 +78,7 @@ impl<G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm {
                         if self.path {
                             parent = Some(Rc::clone(&current_heap_entry));
                             let edge_entry = Some(Rc::clone(edge));
-                            edge_info = create_edge_information(edge_entry, index, adj_node, false);
+                            edge_info = create_edge_information(graph, edge_entry, index, adj_node, false);
                         }
                         let new_heap_entry = Rc::new(HeapEntry::new(*dist2, adj_node, edge_info , parent));
                         heap.push(new_heap_entry);
