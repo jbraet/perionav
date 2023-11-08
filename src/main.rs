@@ -6,7 +6,7 @@ use std::time::Instant;
 fn main() {
     let now = Instant::now();
 
-    let result = OsmReader::new("./data/gent.osm.pbf");
+    let result = OsmReader::new("./data/gent2.osm.pbf");
     let graph_reader = match result {
         Ok(graph_reader) => graph_reader,
         Err(e) => panic!("something went wrong while opening the osm file: {}",e)

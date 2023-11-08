@@ -47,8 +47,8 @@ impl Graph for StandardGraph {
     fn add_edge(&mut self, edge: Edge) {
         let edge_clone = Rc::new(edge);
         edge_clone.apply_nodes(|base_node, adj_node| {
-            let neighbors_for_node = self.neighbors.entry(base_node).or_insert(vec![]);
-            let reverse_neighbors_for_node = self.reverse_neighbors.entry(adj_node).or_insert(vec![]);
+            let neighbors_for_node = self.neighbors.entry(base_node).or_default();
+            let reverse_neighbors_for_node = self.reverse_neighbors.entry(adj_node).or_default();
             
             neighbors_for_node.push(Rc::clone(&edge_clone));
             reverse_neighbors_for_node.push(Rc::clone(&edge_clone));
@@ -128,5 +128,40 @@ impl fmt::Debug for StandardGraph {
         }
 
         write!(f, "")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    #[test]
+    fn internal() {
+        let mut graph = StandardGraph::new();
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+
+        graph.add_edge(Edge::new(0, 1, 1.0, true, true));
+        graph.add_edge(Edge::new(0, 2, 1.0, true, true));
+        graph.add_edge(Edge::new(0, 3, 1.0, true, true));
+        graph.add_edge(Edge::new(1, 2, 1.0, true, true));
+        graph.add_edge(Edge::new(4, 5, 1.0, true, true));
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(2, false, |adj_node, _| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==2 && adj_nodes.contains(&0) && adj_nodes.contains(&1),"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(0, false, |adj_node, _| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==3 && adj_nodes.contains(&1) && adj_nodes.contains(&2) && adj_nodes.contains(&3),"adj nodes: {:?}",adj_nodes);
     }
 }
