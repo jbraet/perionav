@@ -89,6 +89,10 @@ impl Graph for StandardGraph {
         self.nodes.len()
     }
 
+    fn get_nr_edges(&self) -> usize {
+        self.neighbors.values().fold(0,|acc, e| acc + e.len())
+    }
+
     fn route(&self, opts: &AlgorithmOptions<StandardGraph>, start: i32, end: i32) -> Option<RoutingResult> {
         opts.routing_algorithm.route(self, start, end)
     }
