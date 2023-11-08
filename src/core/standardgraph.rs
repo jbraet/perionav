@@ -18,9 +18,10 @@ use std::fmt;
 
 pub struct StandardGraph {
     nodes: Vec<Node>,
+    //TODO kdtree probably doesnt belong inside the graph ? 
     kdtree: KdTree<f64,i32,[f64;2]>, //last type param are the coordinates, second is the extra data stored and the first is just to clarify the third or something
-    neighbors: HashMap<i32, Vec<Rc<Edge>>>, //node index to coinciding edges
-    reverse_neighbors: HashMap<i32,Vec<Rc<Edge>>>,  //probably not the most efficient implementation, but create a graph2 and benchmark
+    neighbors: HashMap<i32, HashMap<i32, Rc<Edge>>>, //node index to coinciding edges
+    reverse_neighbors: HashMap<i32, HashMap<i32, Rc<Edge>>>,  //probably not the most efficient implementation, but create a graph2 and benchmark
 }
 
 impl Default for StandardGraph {
@@ -38,6 +39,38 @@ impl StandardGraph {
             reverse_neighbors: HashMap::new(),
         }
     }
+
+    pub fn new_from_sub_graph(graph: &Self, nodes: &HashSet<i32>) -> Self {
+        let mut ret = Self::new();
+
+        let mut node_map = HashMap::new();
+        let mut node_counter = 0;
+        for i in 0..graph.get_nr_nodes() {
+            if nodes.contains(&(i as i32)) {
+                node_map.insert(i, node_counter);
+                node_counter+=1;
+                
+                let node = graph.get_node(i as i32).copied().unwrap_or_default();
+                ret.add_node(node);
+            }
+        }
+
+        /*for node in nodes {
+            let node:i32 = *node;
+            graph.do_for_all_neighbors(node, false, |adj_node, edge| {
+                //also check if the reverse has been added already
+                //its also possible that there are multiple edges between two nodes so also check the normal order
+                if nodes.contains(&adj_node) {
+                    ret.add_edge(edge.clone())
+                }
+            })
+        }*/
+
+        //TODO go through all of the edges and filter
+        
+
+        ret
+    }
 }
 
 impl Graph for StandardGraph {
@@ -52,9 +85,49 @@ impl Graph for StandardGraph {
             let neighbors_for_node = self.neighbors.entry(base_node).or_default();
             let reverse_neighbors_for_node = self.reverse_neighbors.entry(adj_node).or_default();
             
-            neighbors_for_node.push(Rc::clone(&edge_clone));
-            reverse_neighbors_for_node.push(Rc::clone(&edge_clone));
+            neighbors_for_node.insert(adj_node, Rc::clone(&edge_clone));
+            reverse_neighbors_for_node.insert(base_node, Rc::clone(&edge_clone));
         });
+    }
+
+    fn keep_nodes(&mut self, nodes: &HashSet<i32>) { 
+        let mut node_map = HashMap::new();
+        let mut node_counter = 0;
+        let mut new_nodes = vec![];
+        for i in 0..self.nodes.len() {
+            if nodes.contains(&(i as i32)) {
+                node_map.insert(i, node_counter);
+                node_counter+=1;
+            
+                let node = self.nodes.get(i).copied().unwrap_or_default();
+                new_nodes.push(node);
+            }
+
+            let index = i as i32;
+            let mut remove_neighbors = vec![]; //neighbors of this node
+            self.do_for_all_neighbors(index, false, |adj_node, _| {
+                if !nodes.contains(&index) || !nodes.contains(&adj_node) {
+                    remove_neighbors.push(adj_node); // we can't modify directly in here because we are also reading the neighbors in the func
+                }
+
+                //edge needs to be modified...........
+            });
+
+            for adj_node in remove_neighbors {
+                let remove = self.neighbors.get_mut(&index).is_some_and(|map| {map.remove(&adj_node); map.len()==0});
+                if remove {
+                    self.neighbors.remove(&index);
+                }
+                let remove = self.reverse_neighbors.get_mut(&adj_node).is_some_and(|map| {map.remove(&adj_node); map.len()==0});
+                if remove {
+                    self.reverse_neighbors.remove(&index);
+                }
+            }
+        }
+
+        self.nodes = new_nodes;
+
+        //TODO do something about the kdtree
     }
 
     fn get_node(&self,id: i32) -> Option<&Node> {
@@ -81,10 +154,8 @@ impl Graph for StandardGraph {
             Some(n) => n,
         };
 
-        for edge in neighbors {
-            let adj_node = edge.get_adj_node(base_node);
-
-            f(adj_node, edge);
+        for (adj_node, edge) in neighbors {
+            f(*adj_node, edge);
         }
     }
 
@@ -92,9 +163,9 @@ impl Graph for StandardGraph {
         let edge_option = self.neighbors.get(&start);
         
         edge_option.map(|start_neighbors| {
-            let result_list = start_neighbors.iter().filter(|e| e.get_adj_node(start) == end).collect::<Vec<_>>();
+            let result_list = start_neighbors.iter().filter(|(adj_node,_)| **adj_node == end).collect::<Vec<_>>();
             if !result_list.is_empty() {
-                let edge = result_list[0];
+                let edge = result_list[0].1;
 
                 let actual_start_node = self.get_node(start).unwrap();
                 let actual_end_node = self.get_node(end).unwrap();
@@ -126,9 +197,7 @@ impl Graph for StandardGraph {
 impl fmt::Debug for StandardGraph {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (start_node, edges) in &self.neighbors {
-            for edge in edges {
-                let end_node = edge.get_adj_node(*start_node);
-
+            for end_node in edges.keys() {
                 writeln!(f, "{} -> {}", start_node, end_node)?;
             }
         }

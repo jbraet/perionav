@@ -14,10 +14,12 @@ pub trait Graph {
     //mut functions:
     fn add_node(&mut self, node: Node);
     fn add_edge(&mut self, edge: Edge);
+    fn keep_nodes(&mut self, nodes: &HashSet<i32>);
 
     //simple non mut functions
     fn get_directed_edge_between(&self, start: i32, end: i32) -> Option<Rc<EdgeInformation>>;
     fn get_node(&self,id: i32) -> Option<&Node>;
+
     fn get_nr_nodes(&self) -> usize;
     fn get_nr_edges(&self) -> usize;
 

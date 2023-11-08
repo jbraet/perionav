@@ -20,3 +20,15 @@ impl Default for Node {
         Self::new(0,0.0,0.0)
     }
 }
+
+impl Copy for Node {}
+
+impl Clone for Node {
+    fn clone(&self) -> Self {
+        Node {
+            osm_id: self.osm_id,
+            lat: self.lat,
+            lon: self.lon,
+        }
+    }
+}
