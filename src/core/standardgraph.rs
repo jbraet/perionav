@@ -3,13 +3,14 @@ pub use super::node::Node;
 use super::graph::Graph;
 use super::edgeinformation::EdgeInformation;
 use super::routing::RoutingResult;
-use super::routingoptions::AlgorithmOptions;
+use super::routing::options::RoutingAlgorithmOptions;
 pub use super::weight::WeightCalculator;
 
 use kdtree::KdTree;
 use kdtree::distance::squared_euclidean;
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::rc::Rc;
 use std::vec;
 use std::fmt;
@@ -112,8 +113,12 @@ impl Graph for StandardGraph {
         self.neighbors.values().fold(0,|acc, e| acc + e.len())
     }
 
-    fn route(&self, opts: &AlgorithmOptions<StandardGraph>, start: i32, end: i32) -> Option<RoutingResult> {
+    fn route(&self, opts: &RoutingAlgorithmOptions<StandardGraph>, start: i32, end: i32) -> Option<RoutingResult> {
         opts.routing_algorithm.route(self, start, end)
+    }
+
+    fn get_strongly_connected_subgraphs(&self, _opts: &RoutingAlgorithmOptions<Self>) -> Vec<HashSet<i32>> {
+        vec![] //TODO
     }
 }
 

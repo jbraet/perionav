@@ -1,11 +1,15 @@
+/*
+
+use super::super::{weight::{DistanceWeight, TravelTimeWeight},
+    Graph, WeightCalculator}; */
+
+use crate::core::Graph;
+use crate::core::WeightCalculator;
+use crate::core::weight::{DistanceWeight, TravelTimeWeight};
 use super::{
-    routing::{
         bidirdijkstra::BidirDijkstraRoutingAlgorithm, dijkstra::DijkstraRoutingAlgorithm,
         dijkstra2::DijkstraRoutingAlgorithm2, RoutingResult,
-    },
-    weight::{DistanceWeight, TravelTimeWeight},
-    Graph, WeightCalculator,
-};
+    };
 
 #[non_exhaustive]
 pub enum AlgorithmType {
@@ -26,7 +30,7 @@ pub trait RoutingAlgorithm<G:Graph> {
     fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult>;
 }
 
-pub struct AlgorithmOptions<G:Graph> {
+pub struct RoutingAlgorithmOptions<G:Graph> {
     //path: bool, 
     //algorithm_type: AlgorithmType,
     //weight_type: WeightType,
@@ -34,11 +38,11 @@ pub struct AlgorithmOptions<G:Graph> {
     pub routing_algorithm: Box<dyn RoutingAlgorithm<G>>,
 }
 
-impl<G:Graph> AlgorithmOptions<G> {
+impl<G:Graph> RoutingAlgorithmOptions<G> {
     //path: keep track of a path or not
     pub fn new(path: bool, algorithm_type: AlgorithmType, weight_type: WeightType) -> Self {
         let routing_algorithm = create_routing_algorithm(path, &algorithm_type, &weight_type);
-        AlgorithmOptions{
+        RoutingAlgorithmOptions{
             //path,
             //algorithm_type,
             //weight_type,

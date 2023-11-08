@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.3
+
+### Added
+- strongly connected subcomponents algorithms (TODO)
+
+## Changed
+- move routingoptions to routing::options
+- rename algorithmOptions to RoutingAlgorithmOptions
+
 ## v0.1.2
 
 ### Added

@@ -1,7 +1,7 @@
 use perionav::core::{
     routing::RoutingResult,
     Graph,
-    routingoptions::{AlgorithmOptions, AlgorithmType, WeightType},
+    routing::options::{RoutingAlgorithmOptions, AlgorithmType, WeightType},
 };
 use rstest::rstest;
 
@@ -25,7 +25,7 @@ fn assert_route_path(result: &Option<RoutingResult>, nodes: Vec<i32>) {
 #[rstest]
 fn test_disconnected_graph(#[values(AlgorithmType::DIJKSTRA,AlgorithmType::DIJKSTRA2,AlgorithmType::BIDIRDIJKSTRA)] algorithm_type:AlgorithmType) {
     let g = create_graph::create_ii_graph();
-    let opts = AlgorithmOptions::new(true, algorithm_type,WeightType::DISTANCE);
+    let opts = RoutingAlgorithmOptions::new(true, algorithm_type,WeightType::DISTANCE);
 
     assert_route_weight(&g.route(&opts, 0, 1), 1.0);
     assert!(g.route(&opts, 0, 2).is_none());
@@ -34,7 +34,7 @@ fn test_disconnected_graph(#[values(AlgorithmType::DIJKSTRA,AlgorithmType::DIJKS
 #[rstest]
 fn test_connected_graph(#[values(AlgorithmType::DIJKSTRA,AlgorithmType::DIJKSTRA2,AlgorithmType::BIDIRDIJKSTRA)] algorithm_type:AlgorithmType) {
     let g = create_graph::create_k3_graph();
-    let opts = AlgorithmOptions::new(true, algorithm_type,WeightType::DISTANCE);
+    let opts = RoutingAlgorithmOptions::new(true, algorithm_type,WeightType::DISTANCE);
 
     assert_route_weight(&g.route(&opts, 0, 1), 1.0);
     assert_route_weight(&g.route(&opts, 0, 2), 1.0);
@@ -43,7 +43,7 @@ fn test_connected_graph(#[values(AlgorithmType::DIJKSTRA,AlgorithmType::DIJKSTRA
 #[rstest]
 fn test_square_graph(#[values(AlgorithmType::DIJKSTRA,AlgorithmType::DIJKSTRA2,AlgorithmType::BIDIRDIJKSTRA)] algorithm_type:AlgorithmType) {
     let g = create_graph::create_square_graph();
-    let opts = AlgorithmOptions::new(true,algorithm_type, WeightType::DISTANCE);
+    let opts = RoutingAlgorithmOptions::new(true,algorithm_type, WeightType::DISTANCE);
 
     assert_route_weight(&g.route(&opts, 0, 1), 1.0);
     assert_route_weight(&g.route(&opts, 0, 2), 2.0);
@@ -52,7 +52,7 @@ fn test_square_graph(#[values(AlgorithmType::DIJKSTRA,AlgorithmType::DIJKSTRA2,A
 #[rstest]
 fn test_line_graph(#[values(AlgorithmType::DIJKSTRA,AlgorithmType::DIJKSTRA2,AlgorithmType::BIDIRDIJKSTRA)] algorithm_type:AlgorithmType) {
     let g = create_graph::create_line_graph();
-    let opts = AlgorithmOptions::new(true,algorithm_type,WeightType::DISTANCE);
+    let opts = RoutingAlgorithmOptions::new(true,algorithm_type,WeightType::DISTANCE);
 
     let result = &g.route(&opts, 0, 1);
     assert_route_weight(result, 1.0);
@@ -62,7 +62,7 @@ fn test_line_graph(#[values(AlgorithmType::DIJKSTRA,AlgorithmType::DIJKSTRA2,Alg
 #[rstest]
 fn test_complex_graph(#[values(AlgorithmType::DIJKSTRA,AlgorithmType::DIJKSTRA2,AlgorithmType::BIDIRDIJKSTRA)] algorithm_type:AlgorithmType) {
     let g = create_graph::create_complex_graph();
-    let opts = AlgorithmOptions::new(true, algorithm_type, WeightType::DISTANCE);
+    let opts = RoutingAlgorithmOptions::new(true, algorithm_type, WeightType::DISTANCE);
 
     let result = g.route(&opts, 3, 6);
     assert_route_weight(&result, 8.0);
@@ -75,9 +75,9 @@ fn test_different_algorithms_equal() {
     let nodes = 1000;
     let g = create_graph::create_random_graph(nodes, 3000);
 
-    let opts = AlgorithmOptions::new(true,AlgorithmType::DIJKSTRA,WeightType::DISTANCE);
-    let opts2 = AlgorithmOptions::new(true,AlgorithmType::DIJKSTRA2,WeightType::DISTANCE);
-    let opts3 = AlgorithmOptions::new(true,AlgorithmType::BIDIRDIJKSTRA,WeightType::DISTANCE);
+    let opts = RoutingAlgorithmOptions::new(true,AlgorithmType::DIJKSTRA,WeightType::DISTANCE);
+    let opts2 = RoutingAlgorithmOptions::new(true,AlgorithmType::DIJKSTRA2,WeightType::DISTANCE);
+    let opts3 = RoutingAlgorithmOptions::new(true,AlgorithmType::BIDIRDIJKSTRA,WeightType::DISTANCE);
 
     let mut rng = StdRng::seed_from_u64(42);
 

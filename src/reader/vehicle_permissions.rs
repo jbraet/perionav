@@ -70,12 +70,14 @@ mod tests {
     fn test_is_car_allowed() {
         let mut map : HashMap<&str, &str> = HashMap::new();
         map.insert("vehicle","yes");
+        map.insert("highway","secondary");
         let tags_map=TagsMap(map);
         let (fwd,bwd) = is_car_allowed(&tags_map);
         assert!(fwd&&bwd);
 
         //test if extra unrelated field causes different behavior
         let mut map : HashMap<&str, &str> = HashMap::new();
+        map.insert("highway","secondary");
         map.insert("motorcar","delivery");
         map.insert("apple","pear");
         let tags_map=TagsMap(map);
@@ -91,6 +93,7 @@ mod tests {
 
         //test if reverse oneways work
         let mut map : HashMap<&str, &str> = HashMap::new();
+        map.insert("highway","secondary");
         map.insert("oneway:vehicle","-1");
         let tags_map=TagsMap(map);
         let (fwd,bwd) = is_car_allowed(&tags_map);
@@ -98,6 +101,7 @@ mod tests {
 
         //test if oneways work
         let mut map : HashMap<&str, &str> = HashMap::new();
+        map.insert("highway","secondary");
         map.insert("oneway","yes");
         let tags_map=TagsMap(map);
         let (fwd,bwd) = is_car_allowed(&tags_map);

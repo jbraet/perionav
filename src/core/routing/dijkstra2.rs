@@ -1,7 +1,7 @@
 use super::heapentry2::*;
 use super::Path;
 use super::RoutingResult;
-use crate::core::routingoptions::RoutingAlgorithm;
+use super::options::RoutingAlgorithm;
 use crate::core::Graph;
 use crate::core::WeightCalculator;
 

@@ -3,6 +3,7 @@ pub mod dijkstra;
 pub mod dijkstra2;
 pub mod heapentry;
 pub mod heapentry2;
+pub mod options;
 
 pub use super::path::Path;
 

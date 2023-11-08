@@ -4,7 +4,7 @@
 #![allow(unused_variables)]
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use perionav::core::routingoptions::{AlgorithmOptions, AlgorithmType, WeightType};
+use perionav::core::routing::options::{RoutingAlgorithmOptions, AlgorithmType, WeightType};
 use perionav::core::Graph;
 
 use rand::rngs::StdRng;
@@ -15,9 +15,9 @@ mod create_graph;
 fn criterion_benchmark(c: &mut Criterion) {
     let nodes = 200000;
     let g = create_graph::create_random_graph(nodes, 4 * nodes);
-    let opts = AlgorithmOptions::new(true,AlgorithmType::DIJKSTRA,WeightType::DISTANCE);
-    let opts2 = AlgorithmOptions::new(true,AlgorithmType::DIJKSTRA2,WeightType::DISTANCE);
-    let opts3 = AlgorithmOptions::new(true, AlgorithmType::BIDIRDIJKSTRA,WeightType::DISTANCE);
+    let opts = RoutingAlgorithmOptions::new(true,AlgorithmType::DIJKSTRA,WeightType::DISTANCE);
+    let opts2 = RoutingAlgorithmOptions::new(true,AlgorithmType::DIJKSTRA2,WeightType::DISTANCE);
+    let opts3 = RoutingAlgorithmOptions::new(true, AlgorithmType::BIDIRDIJKSTRA,WeightType::DISTANCE);
 
     let mut rng = StdRng::seed_from_u64(42);
 

@@ -2,7 +2,6 @@ pub mod edge;
 pub mod standardgraph;
 pub mod node;
 pub mod routing;
-pub mod routingoptions;
 pub mod edgeinformation;
 pub mod weight;
 pub mod path;
