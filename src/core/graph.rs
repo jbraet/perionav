@@ -1,3 +1,4 @@
+use super::components::options::ComponentsAlgorithmOptions;
 pub use super::edge::Edge;
 pub use super::node::Node;
 use super::edgeinformation::EdgeInformation;
@@ -32,7 +33,7 @@ pub trait Graph {
         Self:Sized;
 
     //a vector of sets of nodeids, each set is a strongly connected subgraph
-    fn get_strongly_connected_subgraphs(&self, opts: &RoutingAlgorithmOptions<Self>) -> Vec<HashSet<i32>> 
+    fn get_strongly_connected_subgraphs(&self, opts: &ComponentsAlgorithmOptions<Self>) -> Vec<HashSet<i32>> 
     where 
         Self:Sized;
 

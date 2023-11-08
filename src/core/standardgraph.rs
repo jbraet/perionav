@@ -1,3 +1,4 @@
+use super::components::options::ComponentsAlgorithmOptions;
 pub use super::edge::Edge;
 pub use super::node::Node;
 use super::graph::Graph;
@@ -117,8 +118,8 @@ impl Graph for StandardGraph {
         opts.routing_algorithm.route(self, start, end)
     }
 
-    fn get_strongly_connected_subgraphs(&self, _opts: &RoutingAlgorithmOptions<Self>) -> Vec<HashSet<i32>> {
-        vec![] //TODO
+    fn get_strongly_connected_subgraphs(&self, opts: &ComponentsAlgorithmOptions<StandardGraph>) -> Vec<HashSet<i32>> {
+        opts.components_algorithm.get_components(self)
     }
 }
 
