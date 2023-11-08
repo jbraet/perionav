@@ -1,5 +1,5 @@
 use perionav::core::Graph;
-use perionav::core::routingoptions::{AlgorithmType, AlgorithmOptions, WeightType};
+use perionav::core::routing::options::{AlgorithmType, RoutingAlgorithmOptions, WeightType};
 use perionav::reader::osm_reader::OsmReader;
 use std::time::Instant;
 
@@ -29,7 +29,7 @@ fn main() {
     let from_node = g.find_closest_node(from_lat, from_lon);
     let to_node = g.find_closest_node(to_lat, to_lon);
 
-    let opts = AlgorithmOptions::new(true, AlgorithmType::BIDIRDIJKSTRA,WeightType::DISTANCE);
+    let opts = RoutingAlgorithmOptions::new(true, AlgorithmType::BIDIRDIJKSTRA,WeightType::DISTANCE);
     let result = g.route(&opts, from_node, to_node);
     if let Some(routing_result) = result {
         if !routing_result.paths.is_empty(){
