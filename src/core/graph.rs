@@ -16,7 +16,7 @@ pub trait Graph {
     //simple non mut functions
     fn get_directed_edge_between(&self, start: i32, end: i32) -> Option<Rc<EdgeInformation>>;
     fn get_nr_nodes(&self) -> usize;
-    //TODO add nr edges ? 
+    fn get_nr_edges(&self) -> usize;
 
     //more complex functions
     fn do_for_all_neighbors<F>(&self, base_node: i32, reverse: bool, f: F)
