@@ -1,5 +1,7 @@
 mod create_graph;
 
+use perionav::core::Graph;
+
 #[test]
 fn test_disconnected_graph() {
     let g = create_graph::create_ii_graph();

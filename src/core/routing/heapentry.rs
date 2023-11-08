@@ -34,21 +34,13 @@ impl Ord for HeapEntry {
 
 pub fn create_edge_information(edge: Option<Rc<Edge>>, base_node: i32, adj_node: i32, reverse: bool) -> Option<Rc<EdgeInformation>> {
     edge.map(|e| {
-        Rc::new(EdgeInformation {
-            edge: e,
-            adj_node: if !reverse{adj_node} else {base_node},
-        })
+        Rc::new(EdgeInformation::new(e, if !reverse{adj_node} else {base_node}))
     })
 }
 
 impl HeapEntry {
     /// key must be nonNaN
-    pub fn new(
-        key: f64,
-        value: i32,
-        edge_information: Option<Rc<EdgeInformation>>,
-        parent: Option<Rc<HeapEntry>>,
-    ) -> Self {
+    pub fn new(key: f64, value: i32, edge_information: Option<Rc<EdgeInformation>>, parent: Option<Rc<HeapEntry>>) -> Self {
         let notnan_key = NotNan::new(key).expect("given key is NAN");
 
         HeapEntry {

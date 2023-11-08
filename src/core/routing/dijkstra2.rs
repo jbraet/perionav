@@ -16,6 +16,7 @@ pub struct DijkstraRoutingAlgorithm2 {
     pub weight_calculator: WeightCalculator,
 }
 
+//we need to use refcell because otherwise we aren't able to change the deleted field inside the Rc<HeapEntry>
 struct AlgorithmData {
     distances: HashMap<i32, Rc<RefCell<HeapEntry>>>,
     heap: BinaryHeap<Rc<RefCell<HeapEntry>>>,
@@ -37,8 +38,8 @@ fn init_algorithm_data(start: i32) -> AlgorithmData {
     }
 }
 
-impl RoutingAlgorithm for DijkstraRoutingAlgorithm2 {
-    fn route(&self, graph: &Graph, start: i32, end: i32) -> Option<RoutingResult> {
+impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
+    fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult> {
         let AlgorithmData {
             mut distances,
             mut heap,
@@ -47,13 +48,12 @@ impl RoutingAlgorithm for DijkstraRoutingAlgorithm2 {
 
         while !heap.is_empty() {
             current_heap_entry = heap.pop().unwrap(); //OK because of is_empty check above
-
             let current_heap_entry_borrowed = current_heap_entry.borrow();
-            if current_heap_entry.borrow().deleted {
+            if current_heap_entry_borrowed.deleted {
                 continue;
             }
-            let index = current_heap_entry.borrow().value;
 
+            let index = current_heap_entry_borrowed.value;
             if index == end {
                 break;
             }

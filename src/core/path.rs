@@ -44,7 +44,7 @@ impl Path {
         let mut start = true;
         for edge_info in &self.edges {
             if start {
-                let base_node = edge_info.edge.get_adj_node(edge_info.adj_node);
+                let base_node = edge_info.get_base_node();
                 ret.push(base_node);
                 start = false;
             }

@@ -5,12 +5,14 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 use crate::core::edgeinformation::EdgeInformation;
-
+// this is a second implementation of HeapEntry that keeps track if an entry is deleted with a simple bool
+// this allows a different implementation of the dijkstra algorithm
+// however according to benchmarks this is actually slower
 pub struct HeapEntry {
     pub key: NotNan<f64>,
     pub value: i32,
     pub parent: Option<Rc<RefCell<HeapEntry>>>,
-    pub edge: Option<Rc<EdgeInformation>>, //only relevant when parent isn't None
+    pub edge: Option<Rc<EdgeInformation>>, //only relevant when parent isn’t None
     pub deleted: bool,
 }
 
@@ -36,17 +38,9 @@ impl Ord for HeapEntry {
 
 impl HeapEntry {
     /// key must be nonNaN
-    pub fn new(
-        key: f64,
-        value: i32,
-        edge: Option<Rc<Edge>>,
-        parent: Option<Rc<RefCell<HeapEntry>>>,
-    ) -> Self {
+    pub fn new(key: f64, value: i32, edge: Option<Rc<Edge>>,parent: Option<Rc<RefCell<HeapEntry>>>) -> Self {
         let edge_information = edge.map(|e| {
-            Rc::new(EdgeInformation {
-                edge: e,
-                adj_node: value,
-            })
+            Rc::new(EdgeInformation::new(e,value))
         });
 
         let notnan_key = NotNan::new(key).expect("given key is NAN");

@@ -22,19 +22,19 @@ pub enum WeightType {
 
 /// Plan a route given a start and end node
 /// start and end must be a valid node within graph
-pub trait RoutingAlgorithm {
-    fn route(&self, graph: &Graph, start: i32, end: i32) -> Option<RoutingResult>;
+pub trait RoutingAlgorithm<G:Graph> {
+    fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult>;
 }
 
-pub struct AlgorithmOptions {
+pub struct AlgorithmOptions<G:Graph> {
     //path: bool, 
     //algorithm_type: AlgorithmType,
     //weight_type: WeightType,
 
-    pub routing_algorithm: Box<dyn RoutingAlgorithm>,
+    pub routing_algorithm: Box<dyn RoutingAlgorithm<G>>,
 }
 
-impl AlgorithmOptions {
+impl<G:Graph> AlgorithmOptions<G> {
     //path: keep track of a path or not
     pub fn new(path: bool, algorithm_type: AlgorithmType, weight_type: WeightType) -> Self {
         let routing_algorithm = create_routing_algorithm(path, &algorithm_type, &weight_type);
@@ -56,7 +56,7 @@ pub fn create_weight_calculator(weight_type:&WeightType) -> WeightCalculator {
 }
 
 // Creates a routing algorithm based on the given algorithm options
-pub fn create_routing_algorithm(path: bool, algorithm_type: &AlgorithmType, weight_type: &WeightType) -> Box<dyn RoutingAlgorithm> {
+pub fn create_routing_algorithm<G:Graph>(path: bool, algorithm_type: &AlgorithmType, weight_type: &WeightType) -> Box<dyn RoutingAlgorithm<G>> {
     let weight_calculator = create_weight_calculator(weight_type);
     match algorithm_type {
         AlgorithmType::DIJKSTRA => Box::new(DijkstraRoutingAlgorithm {
