@@ -13,7 +13,7 @@ pub enum AlgorithmType {
 
 /// Calculate strongly connected subcomponents of a graph
 pub trait ComponentsAlgorithm<G:Graph> {
-    fn get_components(&self, _graph: &G) -> Vec<HashSet<i32>>;
+    fn get_components(&self, graph: &G) -> Vec<HashSet<i32>>;
 }
 
 pub struct ComponentsAlgorithmOptions<G:Graph> {
