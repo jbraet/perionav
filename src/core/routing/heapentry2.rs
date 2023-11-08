@@ -42,8 +42,8 @@ impl HeapEntry {
     pub fn new(graph: &impl Graph, key: f64, value: i32, edge: Option<Rc<Edge>>,parent: Option<Rc<RefCell<HeapEntry>>>) -> Self {
         let edge_information = edge.map(|e| {
             let base_node = e.get_adj_node(value);
-            let actual_base_node = graph.get_node(base_node as usize).unwrap();
-            let actual_adj_node = graph.get_node(value as usize).unwrap();
+            let actual_base_node = graph.get_node(base_node).unwrap();
+            let actual_adj_node = graph.get_node(value).unwrap();
 
             Rc::new(EdgeInformation::new(e,value, actual_base_node.lat, actual_base_node.lon, actual_adj_node.lat, actual_adj_node.lon))
         });

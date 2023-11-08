@@ -35,8 +35,8 @@ impl Ord for HeapEntry {
 
 pub fn create_edge_information(graph: &impl Graph, edge: Option<Rc<Edge>>, base_node: i32, adj_node: i32, reverse: bool) -> Option<Rc<EdgeInformation>> {
     edge.map(|e| {
-        let actual_base_node = graph.get_node(base_node as usize).unwrap();
-        let actual_adj_node = graph.get_node(base_node as usize).unwrap();
+        let actual_base_node = graph.get_node(base_node).unwrap();
+        let actual_adj_node = graph.get_node(base_node).unwrap();
         if reverse {
             Rc::new(EdgeInformation::new(e, base_node, actual_adj_node.lat,actual_adj_node.lon, actual_base_node.lat, actual_base_node.lon))
         } else {

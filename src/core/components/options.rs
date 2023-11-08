@@ -13,7 +13,7 @@ pub enum AlgorithmType {
 
 /// Calculate strongly connected subcomponents of a graph
 pub trait ComponentsAlgorithm<G:Graph> {
-    fn get_components(&self, graph: &G) -> Vec<HashSet<i32>>;
+    fn get_components(&self, _graph: &G) -> Vec<HashSet<i32>>;
 }
 
 pub struct ComponentsAlgorithmOptions<G:Graph> {
@@ -31,7 +31,7 @@ impl<G:Graph> ComponentsAlgorithmOptions<G> {
 
 pub fn create_components_algorithm<G:Graph>(algorithm_type: &AlgorithmType) -> Box<dyn ComponentsAlgorithm<G>> {
    match algorithm_type {
-        AlgorithmType::PATHBASED => Box::new(PathBasedComponentsAlgorithm{}),
+        AlgorithmType::PATHBASED => Box::new(PathBasedComponentsAlgorithm::new()),
         AlgorithmType::TARJAN => Box::new(TarjanComponentsAlgorithm{}),
         AlgorithmType::KOSARAJU => Box::new(KosarajuComponentsAlgorithm{}),
     }

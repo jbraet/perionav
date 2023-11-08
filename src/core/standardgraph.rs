@@ -57,8 +57,8 @@ impl Graph for StandardGraph {
         });
     }
 
-    fn get_node(&self,id: usize) -> Option<&Node> {
-        self.nodes.get(id)
+    fn get_node(&self,id: i32) -> Option<&Node> {
+        self.nodes.get(id as usize)
     }
 
     fn find_closest_node(&self, lat: f64, lon: f64) -> i32 {
@@ -96,8 +96,8 @@ impl Graph for StandardGraph {
             if !result_list.is_empty() {
                 let edge = result_list[0];
 
-                let actual_start_node = self.get_node(start as usize).unwrap();
-                let actual_end_node = self.get_node(end as usize).unwrap();
+                let actual_start_node = self.get_node(start).unwrap();
+                let actual_end_node = self.get_node(end).unwrap();
             
                 Rc::new(EdgeInformation::new(Rc::clone(edge), end, actual_start_node.lat, actual_start_node.lon, actual_end_node.lat, actual_end_node.lon))
             } else {

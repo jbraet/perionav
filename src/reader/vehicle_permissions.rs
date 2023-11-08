@@ -12,7 +12,7 @@ lazy_static! (
 
     //Where we can accept cars by default, without an explicit car tag
     //so if theres no explicit car tag on a road thats not in here then reject
-    static ref NORMAL_ROADS: HashSet<&'static str> = HashSet::from_iter(["motorway","motorway_link","motorroad", "trunk", "trunk_link", "primary", "primary_link","secondary","secondary_link","tertiary","tertiary_link","unclassified","residential","living_street","service","road","track"]); 
+    static ref NORMAL_ROADS: HashSet<&'static str> = HashSet::from_iter(["motorway","motorway_link","motorroad", "trunk", "trunk_link", "primary", "primary_link","secondary","secondary_link","tertiary","tertiary_link","unclassified","residential","living_street","service","road"]); 
     static ref SPECIAL_ROADS: HashSet<&'static str> = HashSet::from_iter(["pedestrian", "footway", "path", "bridleway", "cycleway", "steps", "platform", "bus_stop", "busway", "bus_guideway", "emergency_access_point", "no", "proposed", "construction", "abandoned"]);
 
     static ref FERRY_ROADS: HashSet<&'static str> = HashSet::from_iter(["shuttle_train","ferry"]);

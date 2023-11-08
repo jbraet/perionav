@@ -56,6 +56,54 @@ pub fn create_complex_graph() -> impl Graph {
     g
 }
 
+pub fn create_small_sub_components_graph() -> impl Graph {
+    let mut g = StandardGraph::new();
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+
+    g.add_edge(Edge::new(0, 1, 1.0, true, false));
+    g.add_edge(Edge::new(1, 2, 1.0, true, false));
+    g.add_edge(Edge::new(2, 0, 1.0, true, false));
+
+    g.add_edge(Edge::new(3, 1, 1.0, true, false));
+    g.add_edge(Edge::new(3, 2, 1.0, true, false));
+    g.add_edge(Edge::new(3, 4, 1.0, true, true));
+
+    g
+}
+
+pub fn create_sub_components_graph() -> impl Graph {
+    let mut g = StandardGraph::new();
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+
+    g.add_edge(Edge::new(0, 1, 1.0, true, false));
+    g.add_edge(Edge::new(1, 2, 1.0, true, false));
+    g.add_edge(Edge::new(2, 0, 1.0, true, false));
+
+    g.add_edge(Edge::new(3, 1, 1.0, true, false));
+    g.add_edge(Edge::new(3, 2, 1.0, true, false));
+    g.add_edge(Edge::new(3, 4, 1.0, true, true));
+
+    g.add_edge(Edge::new(4, 5, 1.0, true, false));
+    g.add_edge(Edge::new(5, 2, 1.0, true, false));
+    g.add_edge(Edge::new(5, 6, 1.0, true, true));
+
+    g.add_edge(Edge::new(7, 4, 1.0, true, false));
+    g.add_edge(Edge::new(7, 6, 1.0, true, false));
+
+    g
+}
+
 pub fn create_ii_graph() -> impl Graph {
     let mut g = StandardGraph::new();
     g.add_node(Node::default());
@@ -63,11 +111,23 @@ pub fn create_ii_graph() -> impl Graph {
     g.add_node(Node::default());
     g.add_node(Node::default());
 
-    let edge1 = Edge::new(0, 1, 1.0, true, true);
-    let edge2 = Edge::new(2, 3, 1.0, true, true);
+    g.add_edge(Edge::new(0, 1, 1.0, true, true));
+    g.add_edge(Edge::new(2, 3, 1.0, true, true));
 
-    g.add_edge(edge1);
-    g.add_edge(edge2);
+    g
+}
+
+pub fn create_connected_ii_graph() -> impl Graph {
+    let mut g = StandardGraph::new();
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+
+    g.add_edge(Edge::new(0, 1, 1.0, true, true));
+    g.add_edge(Edge::new(2, 3, 1.0, true, true));
+    g.add_edge(Edge::new(0, 2, 1.0, true, false));
+
     g
 }
 
@@ -77,13 +137,9 @@ pub fn create_k3_graph() -> impl Graph {
     g.add_node(Node::default());
     g.add_node(Node::default());
 
-    let edge1 = Edge::new(0, 1, 1.0, true, true);
-    let edge2 = Edge::new(0, 2, 1.0, true, true);
-    let edge3 = Edge::new(1, 2, 1.0, true, true);
-
-    g.add_edge(edge1);
-    g.add_edge(edge2);
-    g.add_edge(edge3);
+    g.add_edge(Edge::new(0, 1, 1.0, true, true));
+    g.add_edge(Edge::new(0, 2, 1.0, true, true));
+    g.add_edge(Edge::new(1, 2, 1.0, true, true));
 
     g
 }
@@ -95,15 +151,10 @@ pub fn create_square_graph() -> impl Graph {
     g.add_node(Node::default());
     g.add_node(Node::default());
 
-    let edge1 = Edge::new(0, 1, 1.0, true, true);
-    let edge2 = Edge::new(1, 2, 1.0, true, true);
-    let edge3 = Edge::new(2, 3, 1.0, true, true);
-    let edge4 = Edge::new(3, 0, 1.0, true, true);
-
-    g.add_edge(edge1);
-    g.add_edge(edge2);
-    g.add_edge(edge3);
-    g.add_edge(edge4);
+    g.add_edge(Edge::new(0, 1, 1.0, true, true));
+    g.add_edge(Edge::new(1, 2, 1.0, true, true));
+    g.add_edge(Edge::new(2, 3, 1.0, true, true));
+    g.add_edge(Edge::new(3, 0, 1.0, true, true));
 
     g
 }
@@ -112,17 +163,8 @@ pub fn create_line_graph() -> impl Graph {
     let mut g = StandardGraph::new();
     g.add_node(Node::default());
     g.add_node(Node::default());
-    /*g.add_node(Node::default());
-    g.add_node(Node::default());
-    g.add_node(Node::default());*/
 
-    let edge1 = Edge::new(0, 1, 1.0, true, true);
-    /*let edge2 = Edge::new(1, 2, 1.0, true, true);
-    let edge3 = Edge::new(2, 3, 1.0, true, true);*/
-
-    g.add_edge(edge1);
-    /*g.add_edge(edge2);
-    g.add_edge(edge3);*/
+    g.add_edge(Edge::new(0, 1, 1.0, true, true));
 
     g
 }
