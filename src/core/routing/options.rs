@@ -1,8 +1,3 @@
-/*
-
-use super::super::{weight::{DistanceWeight, TravelTimeWeight},
-    Graph, WeightCalculator}; */
-
 use crate::core::Graph;
 use crate::core::WeightCalculator;
 use crate::core::weight::{DistanceWeight, TravelTimeWeight};
