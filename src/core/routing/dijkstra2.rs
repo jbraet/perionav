@@ -23,18 +23,20 @@ struct AlgorithmData {
     current_heap_entry: Rc<RefCell<HeapEntry>>,
 }
 
-fn init_algorithm_data(graph: &impl Graph, start: i32) -> AlgorithmData {
-    let mut distances: HashMap<i32, Rc<RefCell<HeapEntry>>> = HashMap::new();
-    let mut heap = BinaryHeap::new();
+impl AlgorithmData {
+    pub fn new(graph: &impl Graph, start: i32) -> AlgorithmData {
+        let mut distances: HashMap<i32, Rc<RefCell<HeapEntry>>> = HashMap::new();
+        let mut heap = BinaryHeap::new();
 
-    let current_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph, 0.0, start, None, None)));
-    heap.push(Rc::clone(&current_heap_entry));
-    distances.insert(start, Rc::clone(&current_heap_entry));
+        let current_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph, 0.0, start, None, None)));
+        heap.push(Rc::clone(&current_heap_entry));
+        distances.insert(start, Rc::clone(&current_heap_entry));
 
-    AlgorithmData {
-        distances,
-        heap,
-        current_heap_entry,
+        AlgorithmData {
+            distances,
+            heap,
+            current_heap_entry,
+        }
     }
 }
 
@@ -44,7 +46,7 @@ impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
             mut distances,
             mut heap,
             mut current_heap_entry,
-        } = init_algorithm_data(graph, start);
+        } = AlgorithmData::new(graph, start);
 
         while !heap.is_empty() {
             current_heap_entry = heap.pop().unwrap(); //OK because of is_empty check above

@@ -46,54 +46,56 @@ struct BestData {
     bwd_entry: Option<Rc<HeapEntry>>,
 }
 
-fn init_algorithm_data(start: i32, end: i32) -> AlgorithmData {
-    let mut forward_heap = BinaryHeap::new();
-    let mut backward_heap = BinaryHeap::new();
+impl AlgorithmData {
+    pub fn new(start: i32, end: i32) -> AlgorithmData {
+        let mut forward_heap = BinaryHeap::new();
+        let mut backward_heap = BinaryHeap::new();
 
-    let mut forward_heap_entry = Rc::new(HeapEntry::new(0.0, start, None, None));
-    forward_heap.push(Rc::clone(&forward_heap_entry));
+        let mut forward_heap_entry = Rc::new(HeapEntry::new(0.0, start, None, None));
+        forward_heap.push(Rc::clone(&forward_heap_entry));
 
-    let mut backward_heap_entry = Rc::new(HeapEntry::new(0.0, end, None, None));
-    backward_heap.push(Rc::clone(&backward_heap_entry));
+        let mut backward_heap_entry = Rc::new(HeapEntry::new(0.0, end, None, None));
+        backward_heap.push(Rc::clone(&backward_heap_entry));
 
-    let mut forward_distances: HashMap<i32, Rc<HeapEntry>> = HashMap::new();
-    forward_distances.insert(start, Rc::clone(&forward_heap_entry));
-    let mut backward_distances: HashMap<i32, Rc<HeapEntry>> = HashMap::new();
-    backward_distances.insert(end, Rc::clone(&backward_heap_entry));
+        let mut forward_distances: HashMap<i32, Rc<HeapEntry>> = HashMap::new();
+        forward_distances.insert(start, Rc::clone(&forward_heap_entry));
+        let mut backward_distances: HashMap<i32, Rc<HeapEntry>> = HashMap::new();
+        backward_distances.insert(end, Rc::clone(&backward_heap_entry));
 
-    let used_forward = HashSet::new();
-    let used_backward = HashSet::new();
+        let used_forward = HashSet::new();
+        let used_backward = HashSet::new();
 
-    let best = if start==end { //special case: routing to the same node needs a 0 weight result.
-        BestData { 
-            weight: 0.0,
-            fwd_entry: Some(Rc::clone(&forward_heap_entry)),
-            bwd_entry: Some(Rc::clone(&backward_heap_entry)),
+        let best = if start==end { //special case: routing to the same node needs a 0 weight result.
+            BestData { 
+                weight: 0.0,
+                fwd_entry: Some(Rc::clone(&forward_heap_entry)),
+                bwd_entry: Some(Rc::clone(&backward_heap_entry)),
+            }
+        } else {
+            BestData { 
+                weight: f64::INFINITY,
+                fwd_entry: None,
+                bwd_entry: None,
+            }
+        };
+
+        AlgorithmData {
+            forward: SingleDirectionAlgorithmData {
+                distances: forward_distances,
+                used: used_forward,
+                heap: forward_heap,
+                heap_entry: forward_heap_entry,
+                end,
+            },
+            backward: SingleDirectionAlgorithmData {
+                distances: backward_distances,
+                used: used_backward,
+                heap: backward_heap,
+                heap_entry: backward_heap_entry,
+                end: start,
+            },
+            best,
         }
-    } else {
-        BestData { 
-            weight: f64::INFINITY,
-            fwd_entry: None,
-            bwd_entry: None,
-        }
-    };
-
-    AlgorithmData {
-        forward: SingleDirectionAlgorithmData {
-            distances: forward_distances,
-            used: used_forward,
-            heap: forward_heap,
-            heap_entry: forward_heap_entry,
-            end,
-        },
-        backward: SingleDirectionAlgorithmData {
-            distances: backward_distances,
-            used: used_backward,
-            heap: backward_heap,
-            heap_entry: backward_heap_entry,
-            end: start,
-        },
-        best,
     }
 }
 
@@ -177,7 +179,7 @@ impl BidirDijkstraRoutingAlgorithm {
 
 impl <G:Graph> RoutingAlgorithm<G> for BidirDijkstraRoutingAlgorithm {
     fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult> {
-        let mut data = init_algorithm_data(start, end);
+        let mut data = AlgorithmData::new(start, end);
 
         let mut finished_fwd = false;
         let mut finished_bwd = false;

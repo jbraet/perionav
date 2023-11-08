@@ -17,7 +17,7 @@ pub trait Graph {
 
     //simple non mut functions
     fn get_directed_edge_between(&self, start: i32, end: i32) -> Option<Rc<EdgeInformation>>;
-    fn get_node(&self,id: usize) -> Option<&Node>;
+    fn get_node(&self,id: i32) -> Option<&Node>;
     fn get_nr_nodes(&self) -> usize;
     fn get_nr_edges(&self) -> usize;
 
@@ -38,23 +38,25 @@ pub trait Graph {
         Self:Sized;
 
     //functions with default implementations
-    fn is_strongly_connected(&self) -> bool {
-        let mut index = 0;
+    //used for debugging certain parts of a graph
+    fn visualise_sub_graph(&self, nodes: &HashSet<i32>) -> String {
+        let mut used = HashSet::new();
+        let mut res = vec![];
+        for node in nodes {
+            let node = *node;
+            self.do_for_all_neighbors(node, false, |adj_node, _| {
+                //also check if the reverse has been added already
+                //its also possible that there are multiple edges between two nodes so also check the normal order
+                if nodes.contains(&adj_node) && !used.contains(&(adj_node,node)) && !used.contains(&(node, adj_node)) {
+                    let from = self.get_node(node).unwrap();
+                    let to = self.get_node(adj_node).unwrap();
 
-        let mut stack = vec![index];
-        let mut used = HashSet::from([index]);
-
-        while !stack.is_empty() {
-            index = stack.pop().unwrap();
-
-            self.do_for_all_neighbors(index, false, |adj_node, _| {
-                if !used.contains(&adj_node) {
-                    used.insert(adj_node);
-                    stack.push(adj_node);
+                    res.push(format!("({:.6} {:.6}, {:.6} {:.6})",from.lon, from.lat, to.lon, to.lat));
+                    used.insert((node, adj_node));
                 }
             })
         }
 
-        used.len() == self.get_nr_nodes()
-    }
+        format!("MULTILINESTRING({})",res.join(","))
+    } 
 }

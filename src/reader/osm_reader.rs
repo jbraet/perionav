@@ -56,7 +56,7 @@ impl<'a> OsmReader<'a> {
                         for node_id in way.refs() {
                             let curr_node = *nodes_map.get(&node_id).unwrap_or(&-1);
 
-                            let n=g.get_node(curr_node as usize);
+                            let n=g.get_node(curr_node);
                             if let Some(n) = n {
                                 curr_location=Location::new(n.lat, n.lon);
                             }
