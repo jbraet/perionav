@@ -27,7 +27,7 @@ fn main() {
     let result = g.get_strongly_connected_subgraphs(&opts);
     println!("got {} components in {} seconds",result.len(), now.elapsed().as_secs());
     for component in result {
-        if component.len()>20 {
+        if component.len()>20 && component.len()<1000 {
             println!("component has size {}",component.len());
             /*let visualisation = g.visualise_sub_graph(&component);
             println!("{}",visualisation);*/
