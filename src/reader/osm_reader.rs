@@ -53,8 +53,6 @@ impl<'a> OsmReader<'a> {
                         let mut last_location = Location::new(0,0);
                         let mut curr_location = Location::new(0,0);
 
-                        let mut created_edges=0;
-
                         for node_id in way.refs() {
                             let curr_node = *nodes_map.get(&node_id).unwrap_or(&-1);
 
@@ -75,7 +73,6 @@ impl<'a> OsmReader<'a> {
 
                                 let edge = Edge::new(last_node,curr_node,dist,car_fwd,car_bwd);
                                 g.add_edge(edge);
-                                created_edges+=1;
 
                                 last_node=curr_node;
                                 last_location = curr_location;
