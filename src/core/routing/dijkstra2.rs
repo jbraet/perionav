@@ -23,11 +23,11 @@ struct AlgorithmData {
     current_heap_entry: Rc<RefCell<HeapEntry>>,
 }
 
-fn init_algorithm_data(start: i32) -> AlgorithmData {
+fn init_algorithm_data(graph: &impl Graph, start: i32) -> AlgorithmData {
     let mut distances: HashMap<i32, Rc<RefCell<HeapEntry>>> = HashMap::new();
     let mut heap = BinaryHeap::new();
 
-    let current_heap_entry = Rc::new(RefCell::new(HeapEntry::new(0.0, start, None, None)));
+    let current_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph, 0.0, start, None, None)));
     heap.push(Rc::clone(&current_heap_entry));
     distances.insert(start, Rc::clone(&current_heap_entry));
 
@@ -44,7 +44,7 @@ impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
             mut distances,
             mut heap,
             mut current_heap_entry,
-        } = init_algorithm_data(start);
+        } = init_algorithm_data(graph, start);
 
         while !heap.is_empty() {
             current_heap_entry = heap.pop().unwrap(); //OK because of is_empty check above
@@ -72,7 +72,7 @@ impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
                 let dist2 = *current_heap_entry_borrowed.key + weight;
                 match adj_heap_entry {
                     None => {
-                        let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(
+                        let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph,
                             dist2, adj_node, edge_entry, parent,
                         )));
                         heap.push(Rc::clone(&new_heap_entry));
@@ -81,7 +81,7 @@ impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
                     Some(adj_heap_entry) => {
                         if *adj_heap_entry.borrow().key > dist2 {
                             adj_heap_entry.borrow_mut().deleted = true;
-                            let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(
+                            let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph,
                                 dist2, adj_node, edge_entry, parent,
                             )));
                             heap.push(new_heap_entry);

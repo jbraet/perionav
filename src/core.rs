@@ -14,10 +14,10 @@ pub use graph::*;
 ///Creates an example graph
 pub fn create_graph() -> impl Graph {
     let mut g = StandardGraph::new();
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
-    g.add_node(Node::new());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
 
     let edge1 = Edge::new(0, 1, 1.0, true, true);
     let edge2 = Edge::new(2, 3, 1.0, true, true);

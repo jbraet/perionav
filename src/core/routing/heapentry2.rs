@@ -1,3 +1,4 @@
+use crate::core::Graph;
 use crate::core::edge::Edge;
 use ordered_float::NotNan;
 use std::cell::RefCell;
@@ -38,9 +39,13 @@ impl Ord for HeapEntry {
 
 impl HeapEntry {
     /// key must be nonNaN
-    pub fn new(key: f64, value: i32, edge: Option<Rc<Edge>>,parent: Option<Rc<RefCell<HeapEntry>>>) -> Self {
+    pub fn new(graph: &impl Graph, key: f64, value: i32, edge: Option<Rc<Edge>>,parent: Option<Rc<RefCell<HeapEntry>>>) -> Self {
         let edge_information = edge.map(|e| {
-            Rc::new(EdgeInformation::new(e,value))
+            let base_node = e.get_adj_node(value);
+            let actual_base_node = graph.get_node(base_node as usize).unwrap();
+            let actual_adj_node = graph.get_node(value as usize).unwrap();
+
+            Rc::new(EdgeInformation::new(e,value, actual_base_node.lat, actual_base_node.lon, actual_adj_node.lat, actual_adj_node.lon))
         });
 
         let notnan_key = NotNan::new(key).expect("given key is NAN");

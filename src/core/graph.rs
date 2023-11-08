@@ -15,10 +15,13 @@ pub trait Graph {
 
     //simple non mut functions
     fn get_directed_edge_between(&self, start: i32, end: i32) -> Option<Rc<EdgeInformation>>;
+    fn get_node(&self,id: usize) -> Option<&Node>;
     fn get_nr_nodes(&self) -> usize;
     fn get_nr_edges(&self) -> usize;
 
     //more complex functions
+    fn find_closest_node(&self, lat: f64, lon: f64) -> i32;
+
     fn do_for_all_neighbors<F>(&self, base_node: i32, reverse: bool, f: F)
     where
         F: FnMut(i32, &Rc<Edge>); //TODO this needs to become independent of actual edge storage
