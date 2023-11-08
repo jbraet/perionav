@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::core::{Node,Edge,StandardGraph,Graph};
+use crate::{core::{Node,Edge,StandardGraph,Graph}, reader::tags_map::convert_tags_to_map};
 use super::vehicle_permissions::*;
 
 use osmpbf::{ElementReader, Element};
@@ -10,13 +10,13 @@ use geoutils::Location;
 enum NodeType {
     TowerNode, //end of a way or the middle of a way that connects to another way
     ShapeNode, //middle of a way that's just there for shape
-
 }
 
 pub struct OsmReader<'a> {
     file_name: &'a str,
 
-    node_types: HashMap<i64,NodeType>, //counts usages
+    node_types: HashMap<i64,NodeType>, // from node ID to nodetype
+    way_permissions: HashMap<i64, (bool,bool)> //from way id to 
 }
 
 impl<'a> OsmReader<'a> {
@@ -24,6 +24,7 @@ impl<'a> OsmReader<'a> {
         let mut reader = OsmReader{
             file_name,
             node_types: HashMap::new(),
+            way_permissions: HashMap::new(),
         };
 
         reader.categorize_nodes()?;
@@ -45,10 +46,9 @@ impl<'a> OsmReader<'a> {
                 Element::Way(way) => {
                     nr_ways+=1;
 
-                    let tags_map = convert_tags_to_map(way.tags());
-                    let (car_fwd, car_bwd)= is_car_allowed(&tags_map);
+                    let (car_fwd, car_bwd) = self.way_permissions.get(&way.id()).unwrap_or(&(false, false));
 
-                    if car_fwd || car_bwd {
+                    if *car_fwd || *car_bwd {
                         let mut last_node=-1;
                         let mut last_location = Location::new(0,0);
                         let mut curr_location = Location::new(0,0);
@@ -71,15 +71,14 @@ impl<'a> OsmReader<'a> {
                             if last_node!=-1 && curr_node!=-1 && self.node_types.get(&node_id).is_some_and(|x| matches!(x,NodeType::TowerNode)) {
                                 let dist = last_location.distance_to(&curr_location).unwrap().meters();
 
-                                let edge = Edge::new(last_node,curr_node,dist,car_fwd,car_bwd);
+                                let edge = Edge::new(last_node,curr_node,dist,*car_fwd,*car_bwd);
                                 g.add_edge(edge);
 
-                                last_node=curr_node;
+                                last_node = curr_node;
                                 last_location = curr_location;
                             }
                         }                        
                     }
-                    
                 },
                 Element::Node(_) => {}
                 Element::DenseNode(node) => {
@@ -101,24 +100,33 @@ impl<'a> OsmReader<'a> {
     pub fn categorize_nodes(&mut self) -> Result<(),osmpbf::Error> {
         let reader = ElementReader::from_path(self.file_name)?;
         
+        let mut nr_useful_ways = 0;
+
         reader.for_each(|element| {
             match element {
                 Element::Way(way) => {
-                    let mut first = true;
-                    let mut last = -1;
+                    let tags_map = convert_tags_to_map(way.tags());
+                    let (car_fwd, car_bwd)= is_car_allowed(&tags_map); // in future we might want to support more than just car
 
-                    for node_id in way.refs() {
-                        if first{
-                            self.node_types.insert(node_id,NodeType::TowerNode);
-                            first = false;
+                    self.way_permissions.insert(way.id(), (car_fwd, car_bwd));
+
+                    if car_fwd || car_bwd {
+                        nr_useful_ways+=1;
+                        let mut first = true;
+                        let mut last = -1;
+                        for node_id in way.refs() {
+                            if first{
+                                self.node_types.insert(node_id,NodeType::TowerNode);
+                                first = false;
+                            }
+
+                            self.node_types.entry(node_id).and_modify(|e| *e = NodeType::TowerNode).or_insert(NodeType::ShapeNode);
+                            last = node_id;
                         }
 
-                        self.node_types.entry(node_id).and_modify(|e| *e = NodeType::TowerNode).or_insert(NodeType::ShapeNode);
-                        last = node_id;
-                    }
-
-                    if last!=-1 {
-                        self.node_types.insert(last, NodeType::TowerNode);
+                        if last!=-1 {
+                            self.node_types.insert(last, NodeType::TowerNode);
+                        }
                     }
                 },
                 Element::Node(_) => {}
@@ -126,6 +134,8 @@ impl<'a> OsmReader<'a> {
                 Element::Relation(_) => {}
             }
         })?;
+
+        println!("nr useful ways: {}", nr_useful_ways);
 
         Ok(())
     }

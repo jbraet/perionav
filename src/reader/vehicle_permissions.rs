@@ -1,11 +1,8 @@
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use lazy_static::lazy_static;
 
-use osmpbf::TagIter;
-
-
-pub struct TagsMap<'a>(HashMap<&'a str, &'a str>);
+use super::tags_map::TagsMap;
 
 lazy_static! (
     static ref DEFAULT_VALUES: HashSet<&'static str> = HashSet::from_iter(["yes", "permissive", "designated", "open", "destination", "delivery"].iter().cloned());
@@ -13,65 +10,38 @@ lazy_static! (
     static ref ONEWAY_FORWARD_VALUES: HashSet<&'static str> = HashSet::from_iter(["yes","true","1"]);
     static ref ONEWAY_BACKWARD_VALUES: HashSet<&'static str> = HashSet::from_iter(["-1","reverse"]);
 
+    //Where we can accept cars by default, without an explicit car tag
+    //so if theres no explicit car tag on a road thats not in here then reject
+    static ref NORMAL_ROADS: HashSet<&'static str> = HashSet::from_iter(["motorway","motorway_link","motorroad", "trunk", "trunk_link", "primary", "primary_link","secondary","secondary_link","tertiary","tertiary_link","unclassified","residential","living_street","service","road","track"]); 
     static ref SPECIAL_ROADS: HashSet<&'static str> = HashSet::from_iter(["pedestrian", "footway", "path", "bridleway", "cycleway", "steps", "platform", "bus_stop", "busway", "bus_guideway", "emergency_access_point", "no", "proposed", "construction", "abandoned"]);
+
+    static ref FERRY_ROADS: HashSet<&'static str> = HashSet::from_iter(["shuttle_train","ferry"]);
 );
-
-pub fn convert_tags_to_map(tags: TagIter) -> TagsMap {
-    let mut map = HashMap::new();
-    for tag in tags {
-        map.insert(tag.0, tag.1);
-    }
-
-    TagsMap(map)
-}
-
-impl<'a> TagsMap<'a> {
-    pub fn has_tag(&self, key: &str, values: &HashSet<&str>) -> bool  {
-        if let Some(tag_value) = self.0.get(key) {
-            return values.contains(tag_value);
-        }
-
-        false
-    }
-
-    //returns if one of the keys has a value in values (in the right order)
-    //return false if theres one key that does have a value but the value is not inside values
-    //second bool is to indicate if there was an explicit tag or not
-    pub fn has_tag_ordered(&self, keys: &[&str], values: &HashSet<&str>) -> (bool,bool)  {
-        for key in keys.iter() {
-            if let Some(tag_value) = self.0.get(key) {
-                return (values.contains(tag_value),true) ;
-            } //else its None and we can try the next key value
-        }
-        
-        (true, false)
-    }
-}
 
 //returns if a car is allowed to drive on the given road (forward direction and backward direction)
 pub fn is_car_allowed(tags: &TagsMap) -> (bool,bool) {
-    //return (true,true); //TODO temp
+    if !tags.has_key("highway") {
+        return (false,false)
+    }
+
+    if tags.tag_equals("area", "yes") || tags.has_key("parking") || tags.has_key("amenity") ||  tags.has_key("aeroway") || tags.has_key("barrier") || tags.has_key("railway") || tags.has_key("man_made") || tags.has_key("building") || tags.has_key("landuse") || tags.has_key("natural")  || tags.has_key("leisure") || tags.has_key("golf") || tags.has_key("waterway") || tags.has_key("boundary") {
+        return (false,false)
+    }
+
+    if tags.tag_in_values("road", &FERRY_ROADS) {
+        return (false,false)
+    }
+
+    if tags.tag_equals("impassable", "yes") || tags.tag_equals("status", "impassable") {
+        return (false,false)
+    }
 
     let (car, explicit) = tags.has_tag_ordered(&["motorcar","motor_vehicle","vehicle","access"], &DEFAULT_VALUES);
     if !car && explicit { // this must mean theres an explicit tag saying cars aren't allowed
         return (false,false);
-    } else if !explicit{
-        if let Some(highway_tag) = tags.0.get("highway") {
-            if SPECIAL_ROADS.contains(highway_tag) {
-                return (false,false);
-            }
-        }
-
-        //there was no explicit tag allowing or disallowing cars, so check if it is a foot or bike road.
-        //if it isn't then we assume it is accessible by car by default
-
-        let foot = tags.has_tag("foot", &DEFAULT_VALUES);
-        if foot {
-            return (false, false)
-        }
-        let bike = tags.has_tag("bike", &DEFAULT_VALUES) || tags.has_tag("bicycle", &DEFAULT_VALUES);
-        if  bike {
-            return (false, false)
+    } else if !explicit { //there is no explicit tag saying anything about car access
+        if !tags.tag_in_values("highway", &NORMAL_ROADS) { //SPECIAL_ROADS and normal roads are disjunct this is good enough
+            return (false,false);
         }
     }
 
@@ -81,9 +51,9 @@ pub fn is_car_allowed(tags: &TagsMap) -> (bool,bool) {
 
     let mut forward = true;
     let mut backward = true;
-    if tags.has_tag("oneway", &ONEWAY_FORWARD_VALUES) ||tags.has_tag("oneway:vehicle", &ONEWAY_FORWARD_VALUES) || tags.has_tag("oneway:motor_vehicle", &ONEWAY_FORWARD_VALUES) {
+    if tags.tag_in_values("oneway", &ONEWAY_FORWARD_VALUES) ||tags.tag_in_values("oneway:vehicle", &ONEWAY_FORWARD_VALUES) || tags.tag_in_values("oneway:motor_vehicle", &ONEWAY_FORWARD_VALUES) {
         backward = false;
-    } else if tags.has_tag("oneway", &ONEWAY_BACKWARD_VALUES) ||tags.has_tag("oneway:vehicle", &ONEWAY_BACKWARD_VALUES) || tags.has_tag("oneway:motor_vehicle", &ONEWAY_BACKWARD_VALUES) {
+    } else if tags.tag_in_values("oneway", &ONEWAY_BACKWARD_VALUES) ||tags.tag_in_values("oneway:vehicle", &ONEWAY_BACKWARD_VALUES) || tags.tag_in_values("oneway:motor_vehicle", &ONEWAY_BACKWARD_VALUES) {
         forward = false;
     }
 
@@ -93,6 +63,8 @@ pub fn is_car_allowed(tags: &TagsMap) -> (bool,bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+    use super::super::tags_map::TagsMap;
 
     #[test]
     fn test_is_car_allowed() {
