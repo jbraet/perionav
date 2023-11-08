@@ -7,7 +7,7 @@ use super::options::ComponentsAlgorithm;
 pub struct KosarajuComponentsAlgorithm {}
 
 impl<G:Graph> ComponentsAlgorithm<G> for KosarajuComponentsAlgorithm {
-    fn get_components(&self, _graph: &G, _start: i32, _end: i32) -> Vec<HashSet<i32>> {
+    fn get_components(&self, _graph: &G) -> Vec<HashSet<i32>> {
         vec![] //TODO
     }
 }
