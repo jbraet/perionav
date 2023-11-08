@@ -1,12 +1,13 @@
-use perionav::core::edge::Edge;
 use perionav::core::graph::Graph;
+use perionav::core::edge::Edge;
+use perionav::core::standardgraph::StandardGraph;
 use perionav::core::node::Node;
 
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
-pub fn create_random_graph(nodes: i32, edges: i32) -> Graph {
-    let mut g = Graph::new();
+pub fn create_random_graph(nodes: i32, edges: i32) -> impl Graph {
+    let mut g = StandardGraph::new();
 
     let prob_one_way = 1.0;
 
@@ -31,8 +32,8 @@ pub fn create_random_graph(nodes: i32, edges: i32) -> Graph {
 }
 
 
-pub fn create_complex_graph() -> Graph {
-    let mut g = Graph::new();
+pub fn create_complex_graph() -> impl Graph {
+    let mut g = StandardGraph::new();
     g.add_node(Node::new());
     g.add_node(Node::new());
     g.add_node(Node::new());
@@ -55,8 +56,8 @@ pub fn create_complex_graph() -> Graph {
     g
 }
 
-pub fn create_ii_graph() -> Graph {
-    let mut g = Graph::new();
+pub fn create_ii_graph() -> impl Graph {
+    let mut g = StandardGraph::new();
     g.add_node(Node::new());
     g.add_node(Node::new());
     g.add_node(Node::new());
@@ -70,8 +71,8 @@ pub fn create_ii_graph() -> Graph {
     g
 }
 
-pub fn create_k3_graph() -> Graph {
-    let mut g = Graph::new();
+pub fn create_k3_graph() -> impl Graph {
+    let mut g = StandardGraph::new();
     g.add_node(Node::new());
     g.add_node(Node::new());
     g.add_node(Node::new());
@@ -87,8 +88,8 @@ pub fn create_k3_graph() -> Graph {
     g
 }
 
-pub fn create_square_graph() -> Graph {
-    let mut g = Graph::new();
+pub fn create_square_graph() -> impl Graph {
+    let mut g = StandardGraph::new();
     g.add_node(Node::new());
     g.add_node(Node::new());
     g.add_node(Node::new());
@@ -107,8 +108,8 @@ pub fn create_square_graph() -> Graph {
     g
 }
 
-pub fn create_line_graph() -> Graph {
-    let mut g = Graph::new();
+pub fn create_line_graph() -> impl Graph {
+    let mut g = StandardGraph::new();
     g.add_node(Node::new());
     g.add_node(Node::new());
     /*g.add_node(Node::new());

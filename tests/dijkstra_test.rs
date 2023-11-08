@@ -1,5 +1,6 @@
 use perionav::core::{
     routing::RoutingResult,
+    Graph,
     routingoptions::{AlgorithmOptions, AlgorithmType, WeightType},
 };
 use rstest::rstest;

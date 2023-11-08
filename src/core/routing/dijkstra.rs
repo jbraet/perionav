@@ -41,8 +41,8 @@ fn init_algorithm_data(start: i32) -> AlgorithmData {
     }
 }
 
-impl RoutingAlgorithm for DijkstraRoutingAlgorithm {
-    fn route(&self, graph: &Graph, start: i32, end: i32) -> Option<RoutingResult> {
+impl<G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm {
+    fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult> {
         let AlgorithmData {
             mut distances,
             mut used,

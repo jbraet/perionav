@@ -99,15 +99,15 @@ fn init_algorithm_data(start: i32, end: i32) -> AlgorithmData {
 
 impl BidirDijkstraRoutingAlgorithm {
     //returns if the forward direction is finished
-    fn route_forward(&self, graph: &Graph, data: &mut AlgorithmData) -> bool {
+    fn route_forward(&self, graph: &impl Graph, data: &mut AlgorithmData) -> bool {
         self.fill_edges(graph, &mut data.forward, &data.backward, &mut data.best, false)
     }
 
-    fn route_backward(&self, graph: &Graph, data: &mut AlgorithmData) -> bool {
+    fn route_backward(&self, graph: &impl Graph, data: &mut AlgorithmData) -> bool {
         self.fill_edges(graph, &mut data.backward, &data.forward, &mut data.best, true)
     }
 
-    fn fill_edges(&self, graph: &Graph, data: &mut SingleDirectionAlgorithmData, other_data: &SingleDirectionAlgorithmData, best: &mut BestData, reverse: bool) -> bool {
+    fn fill_edges(&self, graph: &impl Graph, data: &mut SingleDirectionAlgorithmData, other_data: &SingleDirectionAlgorithmData, best: &mut BestData, reverse: bool) -> bool {
         while !data.heap.is_empty() && !data.used.contains(&data.end) {
             data.heap_entry = data.heap.pop().unwrap(); //OK because of is_empty check above
             let index = data.heap_entry.value;
@@ -175,8 +175,8 @@ impl BidirDijkstraRoutingAlgorithm {
     }
 }
 
-impl RoutingAlgorithm for BidirDijkstraRoutingAlgorithm {
-    fn route(&self, graph: &Graph, start: i32, end: i32) -> Option<RoutingResult> {
+impl <G:Graph> RoutingAlgorithm<G> for BidirDijkstraRoutingAlgorithm {
+    fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult> {
         let mut data = init_algorithm_data(start, end);
 
         let mut finished_fwd = false;
@@ -201,7 +201,7 @@ impl RoutingAlgorithm for BidirDijkstraRoutingAlgorithm {
     }
 }
 
-fn extract_path(graph: &Graph, fwd: Option<Rc<HeapEntry>>, bwd: Option<Rc<HeapEntry>>, start: i32, end: i32) -> Path {
+fn extract_path(graph: &impl Graph, fwd: Option<Rc<HeapEntry>>, bwd: Option<Rc<HeapEntry>>, start: i32, end: i32) -> Path {
     let (fwd_edges,fwd_last_node) = match fwd {
         None => (vec![],start),
         Some(fwd_entry) => (fwd_entry.get_path(true),fwd_entry.value),

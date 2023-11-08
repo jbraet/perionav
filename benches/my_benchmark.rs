@@ -5,6 +5,7 @@
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use perionav::core::routingoptions::{AlgorithmOptions, AlgorithmType, WeightType};
+use perionav::core::Graph;
 
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};

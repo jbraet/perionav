@@ -4,21 +4,23 @@ pub struct Edge {
     node_b: i32,
     distance: f64,
 
-    //These properties should become mode specific
+    //TODO These properties should become vehicle specific
     speed: f64,
     is_forward: bool, //from node a to node b
     is_backward: bool,
 }
 
+//vehicle specific edge information
+#[allow(dead_code)]
+pub struct EdgeInformation {
+    speed: f64,
+    is_forward: f64,
+    is_backward: f64,
+}
+
 impl Edge {
     #[inline]
-    pub fn new(
-        node_a: i32,
-        node_b: i32,
-        distance: f64,
-        is_forward: bool,
-        is_backward: bool,
-    ) -> Self {
+    pub fn new(node_a: i32, node_b: i32,distance: f64, is_forward: bool, is_backward: bool) -> Self {
         Edge {
             node_a,
             node_b,

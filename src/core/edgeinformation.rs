@@ -2,9 +2,9 @@ use super::edge::Edge;
 use std::rc::Rc;
 use std::fmt;
 
-//contains a directed version of an edge. By using the adj node we can easily get a direction of the edge
+//represents a directed version of an edge. By using the adj node we can easily get a direction of the edge
 pub struct EdgeInformation { //TODO does this have to contain edge ?
-    pub edge: Rc<Edge>,
+    edge: Rc<Edge>,
     pub adj_node: i32,
 }
 

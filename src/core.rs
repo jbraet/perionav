@@ -1,17 +1,19 @@
 pub mod edge;
-pub mod graph;
+pub mod standardgraph;
 pub mod node;
 pub mod routing;
 pub mod routingoptions;
 pub mod edgeinformation;
 pub mod weight;
 pub mod path;
+pub mod graph;
 
+pub use standardgraph::*;
 pub use graph::*;
 
 ///Creates an example graph
-pub fn create_graph() -> Graph {
-    let mut g = Graph::new();
+pub fn create_graph() -> impl Graph {
+    let mut g = StandardGraph::new();
     g.add_node(Node::new());
     g.add_node(Node::new());
     g.add_node(Node::new());
