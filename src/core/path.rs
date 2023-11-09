@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use super::edgeinformation::EdgeInformation;
+use super::{edgeinformation::EdgeInformation, Graph};
 
 //each edge must be linked to the next edge
 pub struct Path {
@@ -39,19 +39,21 @@ impl Path  {
         }
     }
 
-    pub fn get_wkt(&self) -> String {
+    pub fn get_wkt(&self, graph: &impl Graph) -> String {
         let mut first=false;
         let res = self.edges.iter().fold(vec![],|mut acc, e| {
             if first {
-                let (from_lat, from_lon) = e.get_from_coordinates();
-                acc.push(format!("{:.6} {:.6}",from_lon, from_lat)); //WKT uses lon lat
+                let base_node = e.get_base_node();
+                let node = graph.get_node(base_node).unwrap();
+                acc.push(format!("{:.6} {:.6}",node.lon, node.lat)); //WKT uses lon lat
 
                 first= false;
             }
 
-            let (to_lat, to_lon) = e.get_to_coordinates();
+            let adj_node = e.get_adj_node();
+            let node = graph.get_node(adj_node).unwrap();
 
-            acc.push(format!("{:.6} {:.6}",to_lon, to_lat)); //WKT uses lon lat
+            acc.push(format!("{:.6} {:.6}",node.lon, node.lat)); //WKT uses lon lat
 
             acc
         });

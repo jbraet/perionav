@@ -138,7 +138,7 @@ impl BidirDijkstraRoutingAlgorithm {
                         let mut edge_info = None;
                         if self.path {
                             parent = Some(Rc::clone(&data.heap_entry));
-                            edge_info = create_edge_information(graph, directed_edge_info, index, adj_node, reverse);
+                            edge_info = create_edge_information(directed_edge_info, index, adj_node, reverse);
                         }
 
                         let ret = Rc::new(HeapEntry::new(dist1 + weight, adj_node, edge_info, parent));

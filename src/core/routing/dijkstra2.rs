@@ -72,14 +72,14 @@ impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
                 let dist2 = *current_heap_entry_borrowed.key + weight;
                 match adj_heap_entry {
                     None => {
-                        let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph, dist2, adj_node, directed_edge_info, parent)));
+                        let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(dist2, adj_node, directed_edge_info, parent)));
                         heap.push(Rc::clone(&new_heap_entry));
                         distances.insert(adj_node, Rc::clone(&new_heap_entry));
                     }
                     Some(adj_heap_entry) => {
                         if *adj_heap_entry.borrow().key > dist2 {
                             adj_heap_entry.borrow_mut().deleted = true;
-                            let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(graph, dist2, adj_node, directed_edge_info, parent)));
+                            let new_heap_entry = Rc::new(RefCell::new(HeapEntry::new(dist2, adj_node, directed_edge_info, parent)));
                             heap.push(new_heap_entry);
                         } //else do nothing
                     }

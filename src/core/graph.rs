@@ -1,3 +1,5 @@
+use kdtree::KdTree;
+
 use super::components::options::ComponentsAlgorithmOptions;
 use super::edge::DirectedVehicleSpecificEdgeInformation;
 pub use super::edge::Edge;
@@ -25,8 +27,6 @@ pub trait Graph {
     fn get_nr_edges(&self) -> usize;
 
     //more complex functions
-    fn find_closest_node(&self, lat: f64, lon: f64) -> i32;
-
     fn do_for_all_neighbors<F>(&self, base_node: i32, reverse: bool, f: F)
     where
         F: FnMut(i32, Rc<DirectedVehicleSpecificEdgeInformation>);
@@ -62,4 +62,17 @@ pub trait Graph {
 
         format!("MULTILINESTRING({})",res.join(","))
     } 
+
+    fn create_kd_tree(&self) -> KdTree<f64,i32,[f64;2]>{
+        //last type param are the coordinates, second is the extra data stored and the first is just to clarify the third or something
+        let mut kdtree =  KdTree::new(2);
+
+        for i in 0..self.get_nr_nodes() {
+            let index = i as i32;
+            let node = self.get_node(index).unwrap();
+            kdtree.add([node.lat, node.lon], index).unwrap();
+        }
+        kdtree
+    }
 }
+

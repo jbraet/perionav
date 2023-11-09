@@ -6,25 +6,15 @@ use std::fmt;
 pub struct EdgeInformation {
     base_node: i32,
     adj_node: i32,
-    
-    //TODO can we remove these ? 
-    from_node_lat:f64, 
-    from_node_lon:f64, 
-    to_node_lat:f64, 
-    to_node_lon:f64,
 
     _edge_info: Rc<DirectedVehicleSpecificEdgeInformation>,
 }
 
 impl EdgeInformation{
-    pub fn new(base_node: i32, adj_node: i32, from_node_lat:f64, from_node_lon:f64, to_node_lat:f64, to_node_lon:f64, edge_info: Rc<DirectedVehicleSpecificEdgeInformation>) -> Self {
+    pub fn new(base_node: i32, adj_node: i32, edge_info: Rc<DirectedVehicleSpecificEdgeInformation>) -> Self {
         EdgeInformation { 
             base_node, 
             adj_node,
-            from_node_lat, 
-            from_node_lon, 
-            to_node_lat, 
-            to_node_lon,
             _edge_info: edge_info,
         }
     }
@@ -35,14 +25,6 @@ impl EdgeInformation{
 
     pub fn get_adj_node(&self) -> i32 {
         self.adj_node
-    }
-
-    pub fn get_from_coordinates(&self) -> (f64, f64) {
-        (self.from_node_lat, self.from_node_lon)
-    }
-
-    pub fn get_to_coordinates(&self) -> (f64, f64) {
-        (self.to_node_lat, self.to_node_lon)
     }
 }
 
