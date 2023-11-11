@@ -20,11 +20,3 @@ impl Default for Node {
         Self::new(0,0.0,0.0)
     }
 }
-
-impl Copy for Node {}
-
-impl Clone for Node { //TODO do we still need this ? 
-    fn clone(&self) -> Self {
-       *self
-    }
-}

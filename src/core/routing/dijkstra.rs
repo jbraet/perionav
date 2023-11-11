@@ -66,11 +66,13 @@ impl<G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm {
                 break;
             }
 
-            graph.do_for_all_neighbors(index, false, |adj_node, directed_edge_info| {
+            graph.do_for_all_neighbors(index, false, |adj_node| {
+                let directed_edge_info = graph.get_directed_vehicle_specific_edge_information(index, adj_node, false).unwrap();
+                
                 if !used.contains(&adj_node) {
                     //if dist(start->index) + dist(index->adj_node) < dist(start->adj_node)
                     let dist1 = *distances.get(&index).unwrap_or(&f64::INFINITY);
-                    let weight = &self.weight_calculator.calc_weight(&directed_edge_info, index);
+                    let weight = &self.weight_calculator.calc_weight(&directed_edge_info);
                     let dist2 = distances.entry(adj_node).or_insert(f64::INFINITY);
                     if dist1 + weight < *dist2 {
                         *dist2 = dist1 + weight;

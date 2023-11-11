@@ -126,12 +126,14 @@ impl BidirDijkstraRoutingAlgorithm {
                 return true;
             }
 
-            graph.do_for_all_neighbors(index, reverse, |adj_node, directed_edge_info| {
+            graph.do_for_all_neighbors(index, reverse, |adj_node| {
                 if !data.used.contains(&adj_node) {
+                    let directed_edge_info = graph.get_directed_vehicle_specific_edge_information(index, adj_node, reverse).unwrap();
+
                     //if dist(start->index) + dist(index->adj_node) < dist(start->adj_node)
                     let dist1 = *data.distances.get(&index).map_or(&f64::INFINITY, |heap_entry| &heap_entry.key);
 
-                    let weight = &self.weight_calculator.calc_weight(&directed_edge_info, if !reverse {index} else {adj_node});
+                    let weight = &self.weight_calculator.calc_weight(&directed_edge_info);
 
                     let mut create_new_heap_entry = || {
                         let mut parent = None;
@@ -221,10 +223,12 @@ fn extract_path(graph: &impl Graph, fwd: Option<Rc<HeapEntry>>, bwd: Option<Rc<H
     };
 
     if fwd_last_node!=bwd_first_node {
-        let middle_edge_option = graph.get_directed_edge_between(fwd_last_node, bwd_first_node);
-        if let Some(middle_edge) = middle_edge_option {
-            path.add_edges(vec![middle_edge]);
+        let edge_info_option = graph.get_directed_vehicle_specific_edge_information(fwd_last_node, bwd_first_node, false);
+        if let Some(edge_info)= edge_info_option {
+            let middle_edge = Rc::new(EdgeInformation::new(fwd_last_node, bwd_first_node, edge_info));
+            path.add_edge(middle_edge);
         }
+        
     }
 
     path.add_edges(bwd_edges);

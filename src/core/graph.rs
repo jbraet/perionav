@@ -4,7 +4,6 @@ use super::components::options::ComponentsAlgorithmOptions;
 use super::edge::DirectedVehicleSpecificEdgeInformation;
 pub use super::edge::Edge;
 pub use super::node::Node;
-use super::edgeinformation::EdgeInformation;
 use super::routing::RoutingResult;
 use super::routing::options::RoutingAlgorithmOptions;
 pub use super::weight::WeightCalculator;
@@ -20,16 +19,16 @@ pub trait Graph {
     fn keep_nodes(&mut self, nodes: &HashSet<i32>);
 
     //simple non mut functions
-    fn get_directed_edge_between(&self, start: i32, end: i32) -> Option<Rc<EdgeInformation>>;
+    fn get_directed_vehicle_specific_edge_information(&self, base_node: i32, adj_node: i32, reverse: bool) ->  Option<Rc<DirectedVehicleSpecificEdgeInformation>>;
     fn get_node(&self,id: i32) -> Option<&Node>;
 
     fn get_nr_nodes(&self) -> usize;
     fn get_nr_edges(&self) -> usize;
-
+    
     //more complex functions
     fn do_for_all_neighbors<F>(&self, base_node: i32, reverse: bool, f: F)
     where
-        F: FnMut(i32, Rc<DirectedVehicleSpecificEdgeInformation>);
+        F: FnMut(i32);
 
     fn route(&self, opts: &RoutingAlgorithmOptions<Self>, start: i32, end: i32) -> Option<RoutingResult>
     where
@@ -47,7 +46,7 @@ pub trait Graph {
         let mut res = vec![];
         for node in nodes {
             let node = *node;
-            self.do_for_all_neighbors(node, false, |adj_node, _| {
+            self.do_for_all_neighbors(node, false, |adj_node| {
                 //also check if the reverse has been added already
                 //its also possible that there are multiple edges between two nodes so also check the normal order
                 if nodes.contains(&adj_node) && !used.contains(&(adj_node,node)) && !used.contains(&(node, adj_node)) {

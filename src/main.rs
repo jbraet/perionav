@@ -35,8 +35,8 @@ fn main() {
         //used for some debugging
         if component.len()>20 && component.len()<5000 {
             println!("component has size {}",component.len());
-            /*let visualisation = g.visualise_sub_graph(&component);
-            println!("{}",visualisation);*/
+            let visualisation = g.visualise_sub_graph(&component);
+            println!("{}",visualisation);
         }
 
         if component.len()>max_size {

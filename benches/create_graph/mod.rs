@@ -7,7 +7,7 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
 pub fn create_random_graph(nodes: i32, edges: i32) -> impl Graph {
-    let mut g = StandardGraph::new();
+    let mut g = StandardGraph::new(100);
 
     let prob_one_way = 0.2;
 
@@ -28,7 +28,7 @@ pub fn create_random_graph(nodes: i32, edges: i32) -> impl Graph {
 }
 
 pub fn create_complex_graph() -> impl Graph {
-    let mut g = StandardGraph::new();
+    let mut g = StandardGraph::new(100);
     g.add_node(Node::default());
     g.add_node(Node::default());
     g.add_node(Node::default());
@@ -51,7 +51,7 @@ pub fn create_complex_graph() -> impl Graph {
 }
 
 pub fn create_ii_graph() -> impl Graph {
-    let mut g = StandardGraph::new();
+    let mut g = StandardGraph::new(100);
     g.add_node(Node::default());
     g.add_node(Node::default());
     g.add_node(Node::default());
@@ -63,7 +63,7 @@ pub fn create_ii_graph() -> impl Graph {
 }
 
 pub fn create_k3_graph() -> impl Graph {
-    let mut g = StandardGraph::new();
+    let mut g = StandardGraph::new(100);
     g.add_node(Node::default());
     g.add_node(Node::default());
     g.add_node(Node::default());
@@ -76,7 +76,7 @@ pub fn create_k3_graph() -> impl Graph {
 }
 
 pub fn create_square_graph() -> impl Graph {
-    let mut g = StandardGraph::new();
+    let mut g = StandardGraph::new(100);
     g.add_node(Node::default());
     g.add_node(Node::default());
     g.add_node(Node::default());

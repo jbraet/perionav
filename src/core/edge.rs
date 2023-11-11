@@ -2,7 +2,7 @@ use std::{collections::HashMap, rc::Rc};
 
 
 pub struct Edge {
-    forward: bool, //TODO review if we need this
+    forward: bool,
 
     edge_info: Rc<HashMap<VehicleTypes, VehicleSpecificEdgeInformation>>,
 }
@@ -30,8 +30,10 @@ pub struct DirectedVehicleSpecificEdgeInformation {
 }
 
 impl Edge {
+    //create some other constructors in the future
+    
     #[inline]
-    pub fn new(distance: f64, is_forward: bool, is_backward: bool) -> Self { //TODO probably some other constructors
+    pub fn new(distance: f64, is_forward: bool, is_backward: bool) -> Self { 
         let undirected_data = Rc::new(UndirectedVehicleSpecificEdgeInformation{
             distance,
         });

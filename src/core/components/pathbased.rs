@@ -56,7 +56,7 @@ impl PathBasedComponentsAlgorithm {
 
                 stack.push((current_node,false)); // we will come back to this once all others are explored
 
-                graph.do_for_all_neighbors(current_node, false, |adj_node, _| {
+                graph.do_for_all_neighbors(current_node, false, |adj_node| {
                     if let Some(preorder_number_adj) = algorithm_data.preorder_numbers.get(&adj_node) {
                         if !algorithm_data.is_in_component.contains(&adj_node) {
                             while algorithm_data.cycles_stack.last().is_some_and(|x| algorithm_data.preorder_numbers.get(x).is_some_and(|c| c > preorder_number_adj)) {

@@ -60,7 +60,9 @@ impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
                 break;
             }
 
-            graph.do_for_all_neighbors(index, false, |adj_node, directed_edge_info| {
+            graph.do_for_all_neighbors(index, false, |adj_node| {
+                let directed_edge_info = graph.get_directed_vehicle_specific_edge_information(index, adj_node, false).unwrap();
+                
                 let adj_heap_entry = distances.get(&adj_node);
 
                 let mut parent = None;
@@ -68,7 +70,7 @@ impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
                     parent = Some(Rc::clone(&current_heap_entry));
                 }
 
-                let weight = &self.weight_calculator.calc_weight(&directed_edge_info, index);
+                let weight = &self.weight_calculator.calc_weight(&directed_edge_info);
                 let dist2 = *current_heap_entry_borrowed.key + weight;
                 match adj_heap_entry {
                     None => {

@@ -8,12 +8,28 @@ pub struct Path {
 } 
 
 impl Path  {
+    //TODO does this need to be Rc's ? 
     pub fn new(edges: Vec<Rc<EdgeInformation>>) -> Self {
         Path::check_edges_valid(&edges, None);
 
         Path {
             edges,
         }
+    }
+
+    pub fn add_edge(&mut self, edge: Rc<EdgeInformation>) {
+        let last_node = self.edges.last().map(|e| {
+            e.get_adj_node()
+        });
+
+        if let Some(last_node) = last_node {
+            let base_node = edge.get_base_node();
+            if base_node != last_node {
+                panic!("edges aren't connected: last node {} doesnt match current node {}", last_node, base_node)
+            }
+        }
+
+        self.edges.push(edge);
     }
 
     pub fn add_edges(&mut self, edges: Vec<Rc<EdgeInformation>>) {
