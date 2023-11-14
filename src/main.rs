@@ -25,18 +25,23 @@ fn main() {
     
     println!("created graph in {} ms: nr edges={} & nr nodes={}", now.elapsed().as_millis(), g.get_nr_edges(), g.get_nr_nodes());
     let now = Instant::now();
-
     let opts = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::PATHBASED);
     let result = g.get_strongly_connected_subgraphs(&opts);
     println!("got {} components in {} ms",result.len(), now.elapsed().as_millis());
+
+    let now = Instant::now();
+    let opts2 = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::KOSARAJU);
+    let result2 = g.get_strongly_connected_subgraphs(&opts2);
+    println!("got {} components in {} ms",result2.len(), now.elapsed().as_millis());
+
     let mut max_size = 0; 
     let mut max_component = HashSet::new();
     for component in result {
         //used for some debugging
         if component.len()>20 && component.len()<5000 {
             println!("component has size {}",component.len());
-            let visualisation = g.visualise_sub_graph(&component);
-            println!("{}",visualisation);
+            /*let visualisation = g.visualise_sub_graph(&component);
+            println!("{}",visualisation);*/
         }
 
         if component.len()>max_size {
@@ -44,6 +49,7 @@ fn main() {
             max_component = component;
         }
     }
+
 
     println!("graph shrinking from {} nodes to {} nodes", g.get_nr_nodes(), max_component.len());
     let now = Instant::now();

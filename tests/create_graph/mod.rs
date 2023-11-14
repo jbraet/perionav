@@ -160,11 +160,54 @@ pub fn create_square_graph() -> impl Graph {
 }
 
 pub fn create_line_graph() -> impl Graph {
-    let mut g = StandardGraph::new(100);
+    let mut g = StandardGraph::new(2);
     g.add_node(Node::default());
     g.add_node(Node::default());
 
     g.add_edge(0, 1, Edge::new(1.0, true, true));
+
+    g
+}
+
+pub fn create_legs_graph() -> impl Graph {
+    let mut g = StandardGraph::new(3);
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+
+    g.add_edge(0, 1, Edge::new(1.0, true, false));
+    g.add_edge(0, 2, Edge::new(1.0, true, false));
+    g.add_edge(1, 2, Edge::new(1.0, true, false));
+    g.add_edge(2, 1, Edge::new(1.0, true, false));
+
+    g
+}
+
+pub fn create_diamond_graph() -> impl Graph {
+    let mut g = StandardGraph::new(4);
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+
+    g.add_edge(0, 1, Edge::new(1.0, true, false));
+    g.add_edge(1, 2, Edge::new(1.0, true, false));
+    g.add_edge(0, 3, Edge::new(1.0, true, false));
+    g.add_edge(3, 2, Edge::new(1.0, true, false));
+
+    g
+}
+
+//connected but no strongly connected subcomponents
+pub fn create_strongly_disconnected_graph() -> impl Graph {
+    let mut g = StandardGraph::new(5);
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+    g.add_node(Node::default());
+
+    g.add_edge(0, 2, Edge::new(1.0, true, false));
+    g.add_edge(0, 1, Edge::new(1.0, true, false));
+    g.add_edge(1, 2, Edge::new(1.0, true, false));
 
     g
 }

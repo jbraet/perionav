@@ -12,7 +12,7 @@ use std::collections::HashSet;
 
 use std::rc::Rc;
 
-pub trait Graph {
+pub trait Graph: std::fmt::Debug  {
     //mut functions:
     fn add_node(&mut self, node: Node);
     fn add_edge(&mut self, base_node:i32, adj_node: i32,  edge: Edge);
