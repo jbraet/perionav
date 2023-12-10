@@ -16,7 +16,8 @@ pub struct OsmReader<'a> {
     file_name: &'a str,
 
     node_types: HashMap<i64,NodeType>, // from node ID to nodetype
-    way_permissions: HashMap<i64, (bool,bool)> //from way id to 
+    way_permissions: HashMap<i64, (bool,bool)>, //from way id to 
+    nr_useful_nodes: usize,
 }
 
 impl<'a> OsmReader<'a> {
@@ -25,6 +26,7 @@ impl<'a> OsmReader<'a> {
             file_name,
             node_types: HashMap::new(),
             way_permissions: HashMap::new(),
+            nr_useful_nodes: 0,
         };
 
         reader.categorize_nodes()?;
@@ -34,7 +36,7 @@ impl<'a> OsmReader<'a> {
     pub fn read_graph(&self) -> Result<impl Graph,osmpbf::Error> {
         let reader = ElementReader::from_path(self.file_name)?;
 
-        let mut g = StandardGraph::new();
+        let mut g = StandardGraph::new(self.nr_useful_nodes);
         let mut curr_node_index = 0; //the index inside the graph
 
         let mut nodes_map = HashMap::new();
@@ -71,8 +73,8 @@ impl<'a> OsmReader<'a> {
                             if last_node!=-1 && curr_node!=-1 && self.node_types.get(&node_id).is_some_and(|x| matches!(x,NodeType::TowerNode)) {
                                 let dist = last_location.distance_to(&curr_location).unwrap().meters();
 
-                                let edge = Edge::new(last_node,curr_node,dist,*car_fwd,*car_bwd);
-                                g.add_edge(edge);
+                                let edge = Edge::new(dist,*car_fwd,*car_bwd);
+                                g.add_edge(last_node, curr_node, edge);
 
                                 last_node = curr_node;
                                 last_location = curr_location;
@@ -117,10 +119,14 @@ impl<'a> OsmReader<'a> {
                         for node_id in way.refs() {
                             if first{
                                 self.node_types.insert(node_id,NodeType::TowerNode);
+                                self.nr_useful_nodes+=1;
                                 first = false;
                             }
 
-                            self.node_types.entry(node_id).and_modify(|e| *e = NodeType::TowerNode).or_insert(NodeType::ShapeNode);
+                            self.node_types.entry(node_id).and_modify(|e| {
+                                *e = NodeType::TowerNode;
+                                self.nr_useful_nodes+=1;
+                            }).or_insert(NodeType::ShapeNode);
                             last = node_id;
                         }
 

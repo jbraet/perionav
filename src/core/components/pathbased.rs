@@ -48,7 +48,7 @@ impl PathBasedComponentsAlgorithm {
         //after visiting a node, the same node will be pushed with false, so that it can be handled after all of the subtree of the current node is handled
 
         while let Some((current_node, visit_neighbors)) = stack.pop() {
-            if visit_neighbors {
+            if visit_neighbors && !algorithm_data.preorder_numbers.contains_key(&current_node) {
                 algorithm_data.preorder_numbers.insert(current_node, algorithm_data.preorder_number);
                 algorithm_data.preorder_number += 1;
                 algorithm_data.current_components_stack.push(current_node);
@@ -56,7 +56,7 @@ impl PathBasedComponentsAlgorithm {
 
                 stack.push((current_node,false)); // we will come back to this once all others are explored
 
-                graph.do_for_all_neighbors(current_node, false, |adj_node, _| {
+                graph.do_for_all_neighbors(current_node, false, |adj_node| {
                     if let Some(preorder_number_adj) = algorithm_data.preorder_numbers.get(&adj_node) {
                         if !algorithm_data.is_in_component.contains(&adj_node) {
                             while algorithm_data.cycles_stack.last().is_some_and(|x| algorithm_data.preorder_numbers.get(x).is_some_and(|c| c > preorder_number_adj)) {

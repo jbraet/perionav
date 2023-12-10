@@ -1,74 +1,143 @@
 use super::components::options::ComponentsAlgorithmOptions;
+use super::edge::DirectedVehicleSpecificEdgeInformation;
 pub use super::edge::Edge;
 pub use super::node::Node;
 use super::graph::Graph;
-use super::edgeinformation::EdgeInformation;
 use super::routing::RoutingResult;
 use super::routing::options::RoutingAlgorithmOptions;
 pub use super::weight::WeightCalculator;
 
-use kdtree::KdTree;
-use kdtree::distance::squared_euclidean;
-
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::rc::Rc;
-use std::vec;
 use std::fmt;
 
+//since we will assume the graph is (nearly (before the filtering)) strongly connected we can assume that each node will have at least one edge to another node
 pub struct StandardGraph {
     nodes: Vec<Node>,
-    kdtree: KdTree<f64,i32,[f64;2]>, //last type param are the coordinates, second is the extra data stored and the first is just to clarify the third or something
-    neighbors: HashMap<i32, Vec<Rc<Edge>>>, //node index to coinciding edges
-    reverse_neighbors: HashMap<i32,Vec<Rc<Edge>>>,  //probably not the most efficient implementation, but create a graph2 and benchmark
+    neighbors: Vec<HashMap<i32, Rc<Edge>>>, //node index to coinciding edges
+    reverse_neighbors: Vec<HashMap<i32, Rc<Edge>>>,  //probably not the most efficient implementation, but create a graph2 and benchmark
 }
 
 impl Default for StandardGraph {
     fn default() -> Self {
-        Self::new()
+        Self::new(100)
     }
 }
 
 impl StandardGraph {
-    pub fn new() -> Self {
+    // nr_nodes is a suggestion to avoid resizing too much
+    pub fn new(nr_nodes: usize) -> Self {
         StandardGraph {
-            kdtree: KdTree::new(2),
-            nodes: vec![],
-            neighbors: HashMap::new(),
-            reverse_neighbors: HashMap::new(),
+            nodes: Vec::with_capacity(nr_nodes),
+            neighbors: Vec::with_capacity(nr_nodes),
+            reverse_neighbors: Vec::with_capacity(nr_nodes),
         }
     }
 }
 
 impl Graph for StandardGraph {
     fn add_node(&mut self, node: Node) {
-        self.kdtree.add([node.lat, node.lon], self.nodes.len() as i32).unwrap();
         self.nodes.push(node);
+
+        //nodes and neighbors start at the same size, so if its greater it can only be because of this call so only need to increase the size by one
+        if self.nodes.len()>self.neighbors.len() {
+            self.neighbors.push(Default::default());
+            self.reverse_neighbors.push(Default::default());
+        }
     }
 
-    fn add_edge(&mut self, edge: Edge) {
-        let edge_clone = Rc::new(edge);
-        edge_clone.apply_nodes(|base_node, adj_node| {
-            let neighbors_for_node = self.neighbors.entry(base_node).or_default();
-            let reverse_neighbors_for_node = self.reverse_neighbors.entry(adj_node).or_default();
-            
-            neighbors_for_node.push(Rc::clone(&edge_clone));
-            reverse_neighbors_for_node.push(Rc::clone(&edge_clone));
-        });
+    fn add_edge(&mut self, base_node:i32, adj_node: i32,  edge: Edge) {
+        assert!((base_node as usize)<self.nodes.len() && (adj_node as usize)<self.nodes.len());
+
+        let fwd = edge.is_forward(super::edge::VehicleTypes::Car);
+        let bwd = edge.is_backward(super::edge::VehicleTypes::Car);
+
+        let reverse_edge = Rc::new(edge.create_opposite());
+        let rc_edge = Rc::new(edge);
+
+        if fwd {
+            self.neighbors[base_node as usize].insert(adj_node, Rc::clone(&rc_edge));
+            self.reverse_neighbors[adj_node as usize].insert(base_node, Rc::clone(&reverse_edge));
+        }
+        
+        if bwd {
+            self.neighbors[adj_node as usize].insert(base_node, Rc::clone(&reverse_edge));
+            self.reverse_neighbors[base_node as usize].insert(adj_node, Rc::clone(&rc_edge));
+        }
     }
+
+    fn keep_nodes(&mut self, nodes: &HashSet<i32>) {
+        let mut index = 0;
+        let mut remaining_index=0_i32;
+        let mut nodes_map = HashMap::new(); //key>=value 
+
+        self.nodes.retain(|_| {
+            let ret = nodes.contains(&index);
+            
+            if ret {
+                nodes_map.insert(index, remaining_index);
+                remaining_index+=1;
+            }
+
+            index+=1;
+            ret
+        });
+
+        let mut index = -1;
+        self.neighbors.retain(|_| {
+            index+=1;
+            nodes.contains(&index)
+        });
+
+        let mut index = -1;
+        self.reverse_neighbors.retain(|_| {
+            index+=1;
+            nodes.contains(&index)
+        });
+
+        for i in 0..self.nodes.len() {
+            let adj_nodes = match self.neighbors.get(i) {
+                None => continue, //there are no neighbors so do nothing
+                Some(n) => n,
+            };
+
+            let mut new_adj_nodes = HashMap::new();
+            for (k,v) in adj_nodes.iter() {
+                if nodes_map.contains_key(k) {
+                    new_adj_nodes.insert(*nodes_map.get(k).unwrap(),Rc::clone(v));
+                }
+            }
+
+            self.neighbors[i]=new_adj_nodes;
+        }
+
+        for i in 0..self.nodes.len() { //separate loops because otherwise the continue doesn't work
+            let reverse_adj_nodes = match self.reverse_neighbors.get(i) {
+                None => continue, //there are no neighbors so do nothing
+                Some(n) => n,
+            };
+
+            let mut new_reverse_adj_nodes = HashMap::new();
+            for (k,v) in reverse_adj_nodes.iter() {
+                if nodes_map.contains_key(k) {
+                    new_reverse_adj_nodes.insert(*nodes_map.get(k).unwrap(),Rc::clone(v));
+                }
+            }
+
+            self.reverse_neighbors[i] = new_reverse_adj_nodes;
+        }
+    }
+
+
 
     fn get_node(&self,id: i32) -> Option<&Node> {
         self.nodes.get(id as usize)
     }
 
-    fn find_closest_node(&self, lat: f64, lon: f64) -> i32 {
-        let kd_nodes = self.kdtree.nearest(&[lat, lon], 1, &squared_euclidean).unwrap();
-        *kd_nodes[0].1
-    }
-
     fn do_for_all_neighbors<F>(&self, base_node: i32, reverse: bool, mut f: F)
     where
-        F: FnMut(i32, &Rc<Edge>),
+        F: FnMut(i32),
     {
         let relevant_neighbors = if reverse {
             &self.reverse_neighbors
@@ -76,33 +145,27 @@ impl Graph for StandardGraph {
             &self.neighbors
         };
 
-        let neighbors = match relevant_neighbors.get(&base_node) {
+        let neighbors = match relevant_neighbors.get(base_node as usize) {
             None => return, //there are no neighbors so do nothing
             Some(n) => n,
         };
 
-        for edge in neighbors {
-            let adj_node = edge.get_adj_node(base_node);
-
-            f(adj_node, edge);
+        for adj_node in neighbors.keys() {
+            f(*adj_node);
         }
     }
 
-    fn get_directed_edge_between(&self, start: i32, end: i32) -> Option<Rc<EdgeInformation>> {
-        let edge_option = self.neighbors.get(&start);
-        
-        edge_option.map(|start_neighbors| {
-            let result_list = start_neighbors.iter().filter(|e| e.get_adj_node(start) == end).collect::<Vec<_>>();
-            if !result_list.is_empty() {
-                let edge = result_list[0];
+    fn get_directed_vehicle_specific_edge_information(&self, base_node: i32, adj_node: i32, reverse: bool) ->  Option<Rc<DirectedVehicleSpecificEdgeInformation>> {
+        let relevant_neighbors = if reverse {
+            &self.reverse_neighbors
+        } else {
+            &self.neighbors
+        };
 
-                let actual_start_node = self.get_node(start).unwrap();
-                let actual_end_node = self.get_node(end).unwrap();
-            
-                Rc::new(EdgeInformation::new(Rc::clone(edge), end, actual_start_node.lat, actual_start_node.lon, actual_end_node.lat, actual_end_node.lon))
-            } else {
-                panic!("edge between {} and {} doesn't exist",start,end)
-            }           
+        relevant_neighbors.get(base_node as usize).and_then(|n| {
+            n.get(&adj_node).and_then(|e| {
+                e.get_directed_vehicle_specific_edge_information(super::edge::VehicleTypes::Car, reverse)
+            })
         })
     }
 
@@ -111,7 +174,7 @@ impl Graph for StandardGraph {
     }
 
     fn get_nr_edges(&self) -> usize {
-        self.neighbors.values().fold(0,|acc, e| acc + e.len())
+        self.neighbors.iter().fold(0,|acc, e| acc + e.len())
     }
 
     fn route(&self, opts: &RoutingAlgorithmOptions<StandardGraph>, start: i32, end: i32) -> Option<RoutingResult> {
@@ -125,10 +188,8 @@ impl Graph for StandardGraph {
 
 impl fmt::Debug for StandardGraph {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for (start_node, edges) in &self.neighbors {
-            for edge in edges {
-                let end_node = edge.get_adj_node(*start_node);
-
+        for (start_node, edges) in self.neighbors.iter().enumerate() {
+            for end_node in edges.keys() {
                 writeln!(f, "{} -> {}", start_node, end_node)?;
             }
         }
@@ -143,31 +204,166 @@ mod tests {
     use std::collections::HashSet;
 
     #[test]
-    fn internal() {
-        let mut graph = StandardGraph::new();
-        graph.add_node(Node::default());
-        graph.add_node(Node::default());
-        graph.add_node(Node::default());
-        graph.add_node(Node::default());
-        graph.add_node(Node::default());
-        graph.add_node(Node::default());
+    fn test_keep_nodes() {
+        let mut g = StandardGraph::new(100);
+        g.add_node(Node::default());
+        g.add_node(Node::default());
+        g.add_node(Node::default());
+        g.add_node(Node::default());
+        g.add_node(Node::default());
+        g.add_node(Node::default());
+        g.add_node(Node::default());
+        g.add_node(Node::default());
 
-        graph.add_edge(Edge::new(0, 1, 1.0, true, true));
-        graph.add_edge(Edge::new(0, 2, 1.0, true, true));
-        graph.add_edge(Edge::new(0, 3, 1.0, true, true));
-        graph.add_edge(Edge::new(1, 2, 1.0, true, true));
-        graph.add_edge(Edge::new(4, 5, 1.0, true, true));
+        g.add_edge(0, 1, Edge::new(1.0, true, false));
+        g.add_edge(1, 2, Edge::new(1.0, true, false));
+        g.add_edge(2, 0, Edge::new(1.0, true, false));
+
+        g.add_edge(3, 1, Edge::new(1.0, true, false));
+        g.add_edge(3, 2, Edge::new(1.0, true, false));
+        g.add_edge(3, 4, Edge::new(1.0, true, true));
+
+        g.add_edge(4, 5, Edge::new(1.0, true, false));
+        g.add_edge(5, 2, Edge::new(1.0, true, false));
+        g.add_edge(5, 6, Edge::new(1.0, true, true));
+
+        g.add_edge(7, 4, Edge::new(1.0, true, false));
+        g.add_edge(7, 6, Edge::new(1.0, true, false));
+
+        let mut nodes = HashSet::new();
+        nodes.insert(0);
+        nodes.insert(1);
+        nodes.insert(2);
+
+        g.keep_nodes(&nodes);
+
+        assert_eq!(g.get_nr_nodes(),3);
 
         let mut adj_nodes=HashSet::new();
-        graph.do_for_all_neighbors(2, false, |adj_node, _| {
+        g.do_for_all_neighbors(0, false, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&1),"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        g.do_for_all_neighbors(1, false, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&2),"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        g.do_for_all_neighbors(2, false, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&0),"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        g.do_for_all_neighbors(0, true, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&2),"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        g.do_for_all_neighbors(1, true, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&0),"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        g.do_for_all_neighbors(2, true, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&1),"adj nodes: {:?}",adj_nodes);
+    }
+
+    #[test]
+    fn test_do_for_all_neighbors() {
+        let mut graph = StandardGraph::new(100);
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+
+        graph.add_edge(0, 1, Edge::new(1.0, true, true));
+        graph.add_edge(0, 2, Edge::new(1.0, true, true));
+        graph.add_edge(0, 3, Edge::new(1.0, true, true));
+        graph.add_edge(1, 2, Edge::new(1.0, true, true));
+        graph.add_edge(4, 5, Edge::new(1.0, true, true));
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(2, false, |adj_node| {
             adj_nodes.insert(adj_node);
         });
         assert!(adj_nodes.len()==2 && adj_nodes.contains(&0) && adj_nodes.contains(&1),"adj nodes: {:?}",adj_nodes);
 
         let mut adj_nodes=HashSet::new();
-        graph.do_for_all_neighbors(0, false, |adj_node, _| {
+        graph.do_for_all_neighbors(0, false, |adj_node| {
             adj_nodes.insert(adj_node);
         });
         assert!(adj_nodes.len()==3 && adj_nodes.contains(&1) && adj_nodes.contains(&2) && adj_nodes.contains(&3),"adj nodes: {:?}",adj_nodes);
+    }
+
+     #[test]
+    fn test_edge_directions() {
+        let mut graph = StandardGraph::new(100);
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+
+        graph.add_node(Node::default());
+        graph.add_node(Node::default());
+
+        graph.add_edge(0, 1, Edge::new(1.0, true, false));
+        graph.add_edge(2, 3, Edge::new(1.0, false, true));
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(0, false, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&1),"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(0, true, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==0,"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(1, false, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==0,"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(1, true, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&0),"adj nodes: {:?}",adj_nodes);
+
+        //now test the edge in the other direction:
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(3, false, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&2),"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(3, true, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==0,"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(2, false, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==0,"adj nodes: {:?}",adj_nodes);
+
+        let mut adj_nodes=HashSet::new();
+        graph.do_for_all_neighbors(2, true, |adj_node| {
+            adj_nodes.insert(adj_node);
+        });
+        assert!(adj_nodes.len()==1 && adj_nodes.contains(&3),"adj nodes: {:?}",adj_nodes);
     }
 }

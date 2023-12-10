@@ -7,6 +7,7 @@
 
 ## Changed
 - move routingoptions to routing::options
+- refactored edge implementation
 - rename algorithmOptions to RoutingAlgorithmOptions
 
 ## v0.1.2

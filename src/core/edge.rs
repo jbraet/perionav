@@ -1,94 +1,105 @@
-#[derive(Debug)]
-pub struct Edge {
-    node_a: i32,
-    node_b: i32,
-    distance: f64,
+use std::{collections::HashMap, rc::Rc};
 
-    //TODO These properties should become vehicle specific
-    speed: f64,
-    is_forward: bool, //from node a to node b
-    is_backward: bool,
+
+pub struct Edge {
+    forward: bool,
+
+    edge_info: Rc<HashMap<VehicleTypes, VehicleSpecificEdgeInformation>>,
 }
 
-//vehicle specific edge information
-#[allow(dead_code)]
-pub struct EdgeInformation {
+#[derive(Eq,PartialEq, Hash)]
+pub enum VehicleTypes {
+    Car,
+    Bike,
+}
+
+pub struct VehicleSpecificEdgeInformation {
+    //properties that can possibly change depending on the direction
+    directed_info: (Rc<DirectedVehicleSpecificEdgeInformation>,Rc<DirectedVehicleSpecificEdgeInformation>), //fwd & bwd
+}
+
+//properties that stay the same in either direction
+pub struct UndirectedVehicleSpecificEdgeInformation {
+    distance: f64,   
+}
+
+pub struct DirectedVehicleSpecificEdgeInformation {
+    undirected_data: Rc<UndirectedVehicleSpecificEdgeInformation>,
     speed: f64,
-    is_forward: f64,
-    is_backward: f64,
+    _acecssible: bool,
 }
 
 impl Edge {
+    //create some other constructors in the future
+    
     #[inline]
-    pub fn new(node_a: i32, node_b: i32,distance: f64, is_forward: bool, is_backward: bool) -> Self {
-        Edge {
-            node_a,
-            node_b,
+    pub fn new(distance: f64, is_forward: bool, is_backward: bool) -> Self { 
+        let undirected_data = Rc::new(UndirectedVehicleSpecificEdgeInformation{
             distance,
-            is_forward,
-            is_backward,
-            speed: 1.0,
+        });
+        let mut edge_info = HashMap::new();
+        edge_info.insert(VehicleTypes::Car, VehicleSpecificEdgeInformation{
+            directed_info: (Rc::new(DirectedVehicleSpecificEdgeInformation{
+                undirected_data: Rc::clone(&undirected_data),
+                speed: 1.0,
+                _acecssible: is_forward,
+            }),Rc::new(DirectedVehicleSpecificEdgeInformation{
+                undirected_data: Rc::clone(&undirected_data),
+                speed: 1.0,
+                _acecssible: is_backward,
+            }))
+        });
+
+        Edge {
+            forward: true,
+            edge_info: Rc::new(edge_info),
         }
     }
 
-    pub fn has_node(&self, node: i32) -> bool {
-        self.node_a == node || self.node_b == node
-    }
-
-    //if base_node is neither of the edge nodes then the result is either one of the edge nodes
-    pub fn get_adj_node(&self, base_node: i32) -> i32 {
-        if base_node == self.node_a {
-            self.node_b
-        } else {
-            self.node_a
+    pub fn create_opposite(&self) -> Self {
+        Self { 
+            forward: !self.forward, 
+            edge_info: Rc::clone(&self.edge_info) 
         }
     }
 
-    pub fn get_is_forward(&self, base_node: i32) -> bool {
-        if base_node == self.node_a {
-            self.is_forward
-        } else {
-            self.is_backward
-        }
+    pub fn is_forward(&self, vehicle_type:VehicleTypes,) -> bool {
+       self.edge_info.get(&vehicle_type).is_some_and(|e| {
+            if self.forward {
+                e.directed_info.0._acecssible
+            } else {
+                e.directed_info.1._acecssible
+            }
+        })
     }
 
-    pub fn get_is_backward(&self, base_node: i32) -> bool {
-        if base_node == self.node_a {
-            self.is_backward
-        } else {
-            self.is_forward
-        }
+    pub fn is_backward(&self, vehicle_type:VehicleTypes,) -> bool {
+        self.edge_info.get(&vehicle_type).is_some_and(|e| {
+            if self.forward {
+                e.directed_info.1._acecssible
+            } else {
+                e.directed_info.0._acecssible
+            }
+        })
     }
 
+    pub fn get_directed_vehicle_specific_edge_information(&self, vehicle_type:VehicleTypes, reverse: bool) -> Option<Rc<DirectedVehicleSpecificEdgeInformation>> {
+        self.edge_info.get(&vehicle_type).map(|e| {
+            if reverse^self.forward {
+                Rc::clone(&e.directed_info.1)
+            } else {
+                Rc::clone(&e.directed_info.0)
+            }
+        })
+    }
+}
+
+impl DirectedVehicleSpecificEdgeInformation {
     pub fn get_speed(&self) -> f64 {
         self.speed
     }
 
     pub fn get_distance(&self) -> f64 {
-        self.distance
-    }
-
-    pub fn apply_nodes<F>(&self, mut f: F)
-    where
-        F: FnMut(i32, i32),
-    {
-        if self.is_forward {
-            f(self.node_a, self.node_b)
-        }
-        if self.is_backward {
-            f(self.node_b, self.node_a)
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn internal() {
-        let edge = Edge::new(0, 1, 0.0, true, true);
-        assert_eq!(edge.get_adj_node(0), 1);
-        assert_eq!(edge.get_adj_node(1), 0);
+        self.undirected_data.distance
     }
 }
