@@ -23,6 +23,7 @@ fn main() {
         Err(e) => panic!("something went wrong while reading the osm file: {}",e)
     };
     
+    //TODO replace with benchmark
     println!("created graph in {} ms: nr edges={} & nr nodes={}", now.elapsed().as_millis(), g.get_nr_edges(), g.get_nr_nodes());
     let now = Instant::now();
     let opts = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::PATHBASED);
@@ -33,6 +34,11 @@ fn main() {
     let opts2 = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::KOSARAJU);
     let result2 = g.get_strongly_connected_subgraphs(&opts2);
     println!("got {} components in {} ms",result2.len(), now.elapsed().as_millis());
+
+    let now = Instant::now();
+    let opts3 = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::TARJAN);
+    let result3 = g.get_strongly_connected_subgraphs(&opts3);
+    println!("got {} components in {} ms",result3.len(), now.elapsed().as_millis());
 
     let mut max_size = 0; 
     let mut max_component = HashSet::new();
@@ -49,7 +55,6 @@ fn main() {
             max_component = component;
         }
     }
-
 
     println!("graph shrinking from {} nodes to {} nodes", g.get_nr_nodes(), max_component.len());
     let now = Instant::now();
