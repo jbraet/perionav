@@ -177,8 +177,7 @@ pub fn create_legs_graph() -> impl Graph {
 
     g.add_edge(0, 1, Edge::new(1.0, true, false));
     g.add_edge(0, 2, Edge::new(1.0, true, false));
-    g.add_edge(1, 2, Edge::new(1.0, true, false));
-    g.add_edge(2, 1, Edge::new(1.0, true, false));
+    g.add_edge(1, 2, Edge::new(1.0, true, true));
 
     g
 }

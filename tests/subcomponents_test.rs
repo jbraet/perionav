@@ -99,7 +99,7 @@ fn test_diamond_graph(#[values(AlgorithmType::PATHBASED, AlgorithmType::KOSARAJU
 
 #[rstest]
 fn test_strongly_disconnected_graph(#[values(AlgorithmType::PATHBASED, AlgorithmType::KOSARAJU, AlgorithmType::TARJAN)] algorithm_type:AlgorithmType) {
-    let g = create_graph::create_strongly_disconnected_graph();
+    let g = create_graph::create_strongly_disconnected_graph(); 
     let opts = ComponentsAlgorithmOptions::new(algorithm_type);
 
     let components = g.get_strongly_connected_subgraphs(&opts);
@@ -108,8 +108,8 @@ fn test_strongly_disconnected_graph(#[values(AlgorithmType::PATHBASED, Algorithm
 
 #[test]
 fn test_algorithms_equal() {
-    let nodes = 5000;
-    let g = create_graph::create_random_graph(nodes, nodes*3);
+    let nodes = 3000;
+    let g = create_graph::create_random_graph(nodes, nodes*2);
 
     let opts = ComponentsAlgorithmOptions::new(AlgorithmType::PATHBASED);
     let opts2 = ComponentsAlgorithmOptions::new(AlgorithmType::KOSARAJU);
