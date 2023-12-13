@@ -1,7 +1,7 @@
 use perionav::core::edge::Edge;
+use perionav::core::node::Node;
 use perionav::core::Graph;
 use perionav::core::StandardGraph;
-use perionav::core::node::Node;
 
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -37,16 +37,16 @@ pub fn create_complex_graph() -> impl Graph {
     g.add_node(Node::default());
     g.add_node(Node::default());
 
-    g.add_edge(0, 1, Edge::new( 4.0, true, true));
-    g.add_edge(0, 4, Edge::new( 2.0, true, true));
-    g.add_edge(0, 6, Edge::new( 3.0, true, true));
-    g.add_edge(1, 4, Edge::new( 1.0, true, true));
-    g.add_edge(1, 3, Edge::new( 2.0, true, true));
-    g.add_edge(1, 2, Edge::new( 3.0, true, true));
-    g.add_edge(2, 6, Edge::new( 4.0, true, true));
-    g.add_edge(5, 4, Edge::new( 4.0, true, true));
-    g.add_edge(5, 6, Edge::new( 4.0, true, true));
-    g.add_edge(3, 4, Edge::new( 5.0, true, true));
+    g.add_edge(0, 1, Edge::new(4.0, true, true));
+    g.add_edge(0, 4, Edge::new(2.0, true, true));
+    g.add_edge(0, 6, Edge::new(3.0, true, true));
+    g.add_edge(1, 4, Edge::new(1.0, true, true));
+    g.add_edge(1, 3, Edge::new(2.0, true, true));
+    g.add_edge(1, 2, Edge::new(3.0, true, true));
+    g.add_edge(2, 6, Edge::new(4.0, true, true));
+    g.add_edge(5, 4, Edge::new(4.0, true, true));
+    g.add_edge(5, 6, Edge::new(4.0, true, true));
+    g.add_edge(3, 4, Edge::new(5.0, true, true));
     g
 }
 
@@ -57,8 +57,8 @@ pub fn create_ii_graph() -> impl Graph {
     g.add_node(Node::default());
     g.add_node(Node::default());
 
-    g.add_edge(0, 1, Edge::new( 1.0, true, true));
-    g.add_edge(2, 3, Edge::new( 1.0, true, true));
+    g.add_edge(0, 1, Edge::new(1.0, true, true));
+    g.add_edge(2, 3, Edge::new(1.0, true, true));
     g
 }
 
@@ -68,9 +68,9 @@ pub fn create_k3_graph() -> impl Graph {
     g.add_node(Node::default());
     g.add_node(Node::default());
 
-    g.add_edge(0, 1, Edge::new( 1.0, true, true));
-    g.add_edge(0, 2, Edge::new( 1.0, true, true));
-    g.add_edge(1, 2, Edge::new( 1.0, true, true));
+    g.add_edge(0, 1, Edge::new(1.0, true, true));
+    g.add_edge(0, 2, Edge::new(1.0, true, true));
+    g.add_edge(1, 2, Edge::new(1.0, true, true));
 
     g
 }
@@ -82,10 +82,10 @@ pub fn create_square_graph() -> impl Graph {
     g.add_node(Node::default());
     g.add_node(Node::default());
 
-    g.add_edge(0, 1, Edge::new( 1.0, true, true));
-    g.add_edge(1, 2, Edge::new( 1.0, true, true));
-    g.add_edge(2, 3, Edge::new( 1.0, true, true));
-    g.add_edge(3, 0, Edge::new( 1.0, true, true));
+    g.add_edge(0, 1, Edge::new(1.0, true, true));
+    g.add_edge(1, 2, Edge::new(1.0, true, true));
+    g.add_edge(2, 3, Edge::new(1.0, true, true));
+    g.add_edge(3, 0, Edge::new(1.0, true, true));
 
     g
 }

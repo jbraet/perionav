@@ -26,11 +26,11 @@ impl AlgorithmDataPart2 {
         }
     }
 
-    fn create_component(&mut  self, graph: &impl Graph, start_node: i32) {
+    fn create_component(&mut self, graph: &impl Graph, start_node: i32) {
         let mut component = HashSet::new();
-        
+
         let mut stack = Vec::new();
-        stack.push(start_node);                
+        stack.push(start_node);
 
         while let Some(current_node) = stack.pop() {
             component.insert(current_node);
@@ -54,7 +54,7 @@ impl AlgorithmData {
         }
     }
 
-    fn visit(&mut self, graph: &impl Graph, start_node:i32) {
+    fn visit(&mut self, graph: &impl Graph, start_node: i32) {
         let mut stack = Vec::new();
         stack.push((start_node, true)); //boolean is whether or not we should visit the neighbors
 
@@ -62,7 +62,7 @@ impl AlgorithmData {
             if visit_neighbors && !self.visited.contains(&current_node) {
                 self.visited.insert(current_node);
 
-                stack.push((current_node,false)); // we will come back to this once all others are explored
+                stack.push((current_node, false)); // we will come back to this once all others are explored
 
                 graph.do_for_all_neighbors(current_node, false, |adj_node| {
                     if !self.visited.contains(&adj_node) {
@@ -76,9 +76,7 @@ impl AlgorithmData {
     }
 }
 
-
-
-impl<G:Graph> ComponentsAlgorithm<G> for KosarajuComponentsAlgorithm {
+impl<G: Graph> ComponentsAlgorithm<G> for KosarajuComponentsAlgorithm {
     fn get_components(&self, graph: &G) -> Vec<HashSet<i32>> {
         let mut algorithm_data = AlgorithmData::new();
 
@@ -91,7 +89,7 @@ impl<G:Graph> ComponentsAlgorithm<G> for KosarajuComponentsAlgorithm {
 
         //we create a new algorithmData
         let mut algorithm_data2 = AlgorithmDataPart2::new();
-        
+
         for start_node in algorithm_data.nodes_list.iter().rev() {
             if !algorithm_data2.is_in_component.contains(start_node) {
                 algorithm_data2.create_component(graph, *start_node);

@@ -1,7 +1,7 @@
-use perionav::core::graph::Graph;
 use perionav::core::edge::Edge;
-use perionav::core::standardgraph::StandardGraph;
+use perionav::core::graph::Graph;
 use perionav::core::node::Node;
+use perionav::core::standardgraph::StandardGraph;
 
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -19,7 +19,7 @@ pub fn create_random_graph(nodes: i32, edges: i32) -> impl Graph {
     for _ in 0..edges {
         let mut from = rng.gen_range(0..nodes);
         let mut to = rng.gen_range(0..nodes);
-        while from==to {
+        while from == to {
             from = rng.gen_range(0..nodes);
             to = rng.gen_range(0..nodes);
         }
@@ -30,7 +30,6 @@ pub fn create_random_graph(nodes: i32, edges: i32) -> impl Graph {
 
     g
 }
-
 
 pub fn create_complex_graph() -> impl Graph {
     let mut g = StandardGraph::new(100);

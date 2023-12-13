@@ -1,6 +1,6 @@
 use super::edge::DirectedVehicleSpecificEdgeInformation;
-use std::rc::Rc;
 use std::fmt;
+use std::rc::Rc;
 
 //represents a directed version of an edge. By using the adj node we can easily get a direction of the edge
 pub struct EdgeInformation {
@@ -10,10 +10,10 @@ pub struct EdgeInformation {
     _edge_info: Rc<DirectedVehicleSpecificEdgeInformation>,
 }
 
-impl EdgeInformation{
+impl EdgeInformation {
     pub fn new(base_node: i32, adj_node: i32, edge_info: Rc<DirectedVehicleSpecificEdgeInformation>) -> Self {
-        EdgeInformation { 
-            base_node, 
+        EdgeInformation {
+            base_node,
             adj_node,
             _edge_info: edge_info,
         }

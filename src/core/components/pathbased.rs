@@ -1,4 +1,4 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashMap, HashSet};
 
 use crate::core::Graph;
 
@@ -10,19 +10,19 @@ pub struct PathBasedComponentsAlgorithm {}
 
 struct AlgorithmData {
     current_components_stack: Vec<i32>, // S in the description; all vertexes in the preorder order. This is used to construct the final components
-    cycles_stack: Vec<i32>, // P in the description; a stack that tries to detect a strongly connected component
+    cycles_stack: Vec<i32>,             // P in the description; a stack that tries to detect a strongly connected component
     //if P finds a cycle it gets popped off, however the relevant vertexes still stay on S. If P ends on the node it started then we have an actual strongly subcomponent that couldn't have been bigger, so we add it to the result
     preorder_number: i32,
-    preorder_numbers: HashMap<i32,i32>, //preorder number
-    is_in_component: HashSet<i32>, //if a vertex is in the component
-    components: Vec<HashSet<i32>>, //actual return value
+    preorder_numbers: HashMap<i32, i32>, //preorder number
+    is_in_component: HashSet<i32>,       //if a vertex is in the component
+    components: Vec<HashSet<i32>>,       //actual return value
 }
 
 impl AlgorithmData {
     fn new() -> Self {
         AlgorithmData {
-            current_components_stack: vec![], 
-            cycles_stack: vec![], 
+            current_components_stack: vec![],
+            cycles_stack: vec![],
             preorder_number: 0,
             preorder_numbers: HashMap::new(),
             is_in_component: HashSet::new(),
@@ -32,20 +32,20 @@ impl AlgorithmData {
 }
 
 impl Default for PathBasedComponentsAlgorithm {
-     fn default() -> Self {
-         Self::new()
-     }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PathBasedComponentsAlgorithm {
     pub fn new() -> Self {
-        PathBasedComponentsAlgorithm{}
+        PathBasedComponentsAlgorithm {}
     }
 
     fn determine_components_from_node(&self, algorithm_data: &mut AlgorithmData, graph: &impl Graph, start_index: i32) {
         let mut stack = Vec::new();
         stack.push((start_index, true)); //boolean is whether or not we should visit the neighbors
-        //after visiting a node, the same node will be pushed with false, so that it can be handled after all of the subtree of the current node is handled
+                                         //after visiting a node, the same node will be pushed with false, so that it can be handled after all of the subtree of the current node is handled
 
         while let Some((current_node, visit_neighbors)) = stack.pop() {
             if visit_neighbors && !algorithm_data.preorder_numbers.contains_key(&current_node) {
@@ -54,12 +54,16 @@ impl PathBasedComponentsAlgorithm {
                 algorithm_data.current_components_stack.push(current_node);
                 algorithm_data.cycles_stack.push(current_node);
 
-                stack.push((current_node,false)); // we will come back to this once all others are explored
+                stack.push((current_node, false)); // we will come back to this once all others are explored
 
                 graph.do_for_all_neighbors(current_node, false, |adj_node| {
                     if let Some(preorder_number_adj) = algorithm_data.preorder_numbers.get(&adj_node) {
                         if !algorithm_data.is_in_component.contains(&adj_node) {
-                            while algorithm_data.cycles_stack.last().is_some_and(|x| algorithm_data.preorder_numbers.get(x).is_some_and(|c| c > preorder_number_adj)) {
+                            while algorithm_data
+                                .cycles_stack
+                                .last()
+                                .is_some_and(|x| algorithm_data.preorder_numbers.get(x).is_some_and(|c| c > preorder_number_adj))
+                            {
                                 algorithm_data.cycles_stack.pop();
                             }
                         }
@@ -84,7 +88,7 @@ impl PathBasedComponentsAlgorithm {
     }
 }
 
-impl<G:Graph> ComponentsAlgorithm<G> for PathBasedComponentsAlgorithm {
+impl<G: Graph> ComponentsAlgorithm<G> for PathBasedComponentsAlgorithm {
     fn get_components(&self, graph: &G) -> Vec<HashSet<i32>> {
         let mut algorithm_data = AlgorithmData::new();
 

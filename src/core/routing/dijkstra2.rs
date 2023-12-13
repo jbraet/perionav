@@ -1,7 +1,7 @@
 use super::heapentry2::*;
+use super::options::RoutingAlgorithm;
 use super::Path;
 use super::RoutingResult;
-use super::options::RoutingAlgorithm;
 use crate::core::Graph;
 use crate::core::WeightCalculator;
 
@@ -40,7 +40,7 @@ impl AlgorithmData {
     }
 }
 
-impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
+impl<G: Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
     fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult> {
         let AlgorithmData {
             mut distances,
@@ -62,7 +62,7 @@ impl <G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
 
             graph.do_for_all_neighbors(index, false, |adj_node| {
                 let directed_edge_info = graph.get_directed_vehicle_specific_edge_information(index, adj_node, false).unwrap();
-                
+
                 let adj_heap_entry = distances.get(&adj_node);
 
                 let mut parent = None;

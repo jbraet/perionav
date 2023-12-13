@@ -4,19 +4,19 @@
 #![allow(unused_variables)]
 
 use super::heapentry::*;
+use super::options::RoutingAlgorithm;
 use super::Path;
 use super::RoutingResult;
-use super::options::RoutingAlgorithm;
 use crate::core::Graph;
 use crate::core::WeightCalculator;
 
 use ordered_float::NotNan;
 
 use std::borrow::BorrowMut;
+use std::collections::hash_map::Entry;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::collections::hash_map::Entry;
 use std::rc::Rc;
 use std::vec;
 
@@ -66,14 +66,15 @@ impl AlgorithmData {
         let used_forward = HashSet::new();
         let used_backward = HashSet::new();
 
-        let best = if start==end { //special case: routing to the same node needs a 0 weight result.
-            BestData { 
+        let best = if start == end {
+            //special case: routing to the same node needs a 0 weight result.
+            BestData {
                 weight: 0.0,
                 fwd_entry: Some(Rc::clone(&forward_heap_entry)),
                 bwd_entry: Some(Rc::clone(&backward_heap_entry)),
             }
         } else {
-            BestData { 
+            BestData {
                 weight: f64::INFINITY,
                 fwd_entry: None,
                 bwd_entry: None,
@@ -110,7 +111,14 @@ impl BidirDijkstraRoutingAlgorithm {
         self.fill_edges(graph, &mut data.backward, &data.forward, &mut data.best, true)
     }
 
-    fn fill_edges(&self, graph: &impl Graph, data: &mut SingleDirectionAlgorithmData, other_data: &SingleDirectionAlgorithmData, best: &mut BestData, reverse: bool) -> bool {
+    fn fill_edges(
+        &self,
+        graph: &impl Graph,
+        data: &mut SingleDirectionAlgorithmData,
+        other_data: &SingleDirectionAlgorithmData,
+        best: &mut BestData,
+        reverse: bool,
+    ) -> bool {
         while !data.heap.is_empty() && !data.used.contains(&data.end) {
             data.heap_entry = data.heap.pop().unwrap(); //OK because of is_empty check above
             let index = data.heap_entry.value;
@@ -155,7 +163,7 @@ impl BidirDijkstraRoutingAlgorithm {
                             entry.insert(create_new_heap_entry());
                         }
                         Entry::Occupied(mut entry) => {
-                            if dist1+weight < entry.get().key.into_inner() {
+                            if dist1 + weight < entry.get().key.into_inner() {
                                 entry.insert(create_new_heap_entry());
                             }
                         }
@@ -163,9 +171,9 @@ impl BidirDijkstraRoutingAlgorithm {
 
                     let other_heap_entry = other_data.distances.get(&adj_node);
                     let other_dist = other_heap_entry.map_or(&f64::INFINITY, |heap_entry| &heap_entry.key);
-                    if dist1+weight+other_dist < best.weight && other_data.used.contains(&adj_node) {
+                    if dist1 + weight + other_dist < best.weight && other_data.used.contains(&adj_node) {
                         let other_heap_entry_unwrapped = other_heap_entry.unwrap(); // safe because otherwise other_dist will be infite and will never satisfy the above condition
-                        best.weight = dist1+weight+other_dist;
+                        best.weight = dist1 + weight + other_dist;
                         if !reverse {
                             best.fwd_entry = Some(Rc::clone(&data.heap_entry));
                             best.bwd_entry = Some(Rc::clone(other_heap_entry_unwrapped));
@@ -184,21 +192,19 @@ impl BidirDijkstraRoutingAlgorithm {
     }
 }
 
-impl <G:Graph> RoutingAlgorithm<G> for BidirDijkstraRoutingAlgorithm {
+impl<G: Graph> RoutingAlgorithm<G> for BidirDijkstraRoutingAlgorithm {
     fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult> {
         let mut data = AlgorithmData::new(start, end);
 
         let mut finished_fwd = false;
         let mut finished_bwd = false;
 
-        while !finished_fwd && !finished_bwd
-            && *data.forward.heap_entry.key + *data.backward.heap_entry.key < data.best.weight
-        {
+        while !finished_fwd && !finished_bwd && *data.forward.heap_entry.key + *data.backward.heap_entry.key < data.best.weight {
             finished_fwd = self.route_forward(graph, &mut data);
             finished_bwd = self.route_backward(graph, &mut data);
         }
 
-        if data.best.weight==f64::INFINITY {
+        if data.best.weight == f64::INFINITY {
             None
         } else {
             Some(RoutingResult {
@@ -211,24 +217,23 @@ impl <G:Graph> RoutingAlgorithm<G> for BidirDijkstraRoutingAlgorithm {
 }
 
 fn extract_path(graph: &impl Graph, fwd: Option<Rc<HeapEntry>>, bwd: Option<Rc<HeapEntry>>, start: i32, end: i32) -> Path {
-    let (fwd_edges,fwd_last_node) = match fwd {
-        None => (vec![],start),
-        Some(fwd_entry) => (fwd_entry.get_path(true),fwd_entry.value),
+    let (fwd_edges, fwd_last_node) = match fwd {
+        None => (vec![], start),
+        Some(fwd_entry) => (fwd_entry.get_path(true), fwd_entry.value),
     };
     let mut path = Path::new(fwd_edges);
 
     let (bwd_edges, bwd_first_node) = match bwd {
-        None => (vec![],end),
-        Some(bwd_entry) => (bwd_entry.get_path(false),bwd_entry.value),
+        None => (vec![], end),
+        Some(bwd_entry) => (bwd_entry.get_path(false), bwd_entry.value),
     };
 
-    if fwd_last_node!=bwd_first_node {
+    if fwd_last_node != bwd_first_node {
         let edge_info_option = graph.get_directed_vehicle_specific_edge_information(fwd_last_node, bwd_first_node, false);
-        if let Some(edge_info)= edge_info_option {
+        if let Some(edge_info) = edge_info_option {
             let middle_edge = Rc::new(EdgeInformation::new(fwd_last_node, bwd_first_node, edge_info));
             path.add_edge(middle_edge);
         }
-        
     }
 
     path.add_edges(bwd_edges);

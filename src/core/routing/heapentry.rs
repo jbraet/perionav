@@ -7,7 +7,7 @@ use crate::core::edgeinformation::EdgeInformation;
 
 pub struct HeapEntry {
     pub key: NotNan<f64>, // distance from start/end
-    pub value: i32, // node
+    pub value: i32,       // node
     pub parent: Option<Rc<HeapEntry>>,
     pub edge: Option<Rc<EdgeInformation>>, //only relevant when parent isn't None
 }
@@ -32,7 +32,12 @@ impl Ord for HeapEntry {
     }
 }
 
-pub fn create_edge_information(edge_info: Rc<DirectedVehicleSpecificEdgeInformation>, base_node: i32, adj_node: i32, reverse: bool) -> Option<Rc<EdgeInformation>> {    
+pub fn create_edge_information(
+    edge_info: Rc<DirectedVehicleSpecificEdgeInformation>,
+    base_node: i32,
+    adj_node: i32,
+    reverse: bool,
+) -> Option<Rc<EdgeInformation>> {
     if reverse {
         Some(Rc::new(EdgeInformation::new(adj_node, base_node, edge_info)))
     } else {
@@ -53,7 +58,7 @@ impl HeapEntry {
         }
     }
 
-    pub fn get_path(&self, reverse:bool) -> Vec<Rc<EdgeInformation>> {
+    pub fn get_path(&self, reverse: bool) -> Vec<Rc<EdgeInformation>> {
         let mut ret = vec![];
 
         let mut curr = match &self.parent {

@@ -1,7 +1,7 @@
 use super::heapentry::*;
+use super::options::RoutingAlgorithm;
 use super::Path;
 use super::RoutingResult;
-use super::options::RoutingAlgorithm;
 use crate::core::Graph;
 use crate::core::WeightCalculator;
 
@@ -43,7 +43,7 @@ impl AlgorithmData {
     }
 }
 
-impl<G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm {
+impl<G: Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm {
     fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult> {
         let AlgorithmData {
             mut distances,
@@ -68,7 +68,7 @@ impl<G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm {
 
             graph.do_for_all_neighbors(index, false, |adj_node| {
                 let directed_edge_info = graph.get_directed_vehicle_specific_edge_information(index, adj_node, false).unwrap();
-                
+
                 if !used.contains(&adj_node) {
                     //if dist(start->index) + dist(index->adj_node) < dist(start->adj_node)
                     let dist1 = *distances.get(&index).unwrap_or(&f64::INFINITY);
@@ -83,7 +83,7 @@ impl<G:Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm {
                             parent = Some(Rc::clone(&current_heap_entry));
                             edge_info = create_edge_information(directed_edge_info, index, adj_node, false);
                         }
-                        let new_heap_entry = Rc::new(HeapEntry::new(*dist2, adj_node, edge_info , parent));
+                        let new_heap_entry = Rc::new(HeapEntry::new(*dist2, adj_node, edge_info, parent));
                         heap.push(new_heap_entry);
                     }
                 }
