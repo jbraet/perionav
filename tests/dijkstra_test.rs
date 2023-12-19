@@ -15,7 +15,7 @@ fn assert_route_weight(result: &Option<RoutingResult>, weight: f64) {
     assert_eq!(result.as_ref().unwrap().weight, weight);
 }
 
-fn assert_route_path(result: &Option<RoutingResult>, nodes: Vec<i32>) {
+fn assert_route_path(result: &Option<RoutingResult>, nodes: Vec<usize>) {
     assert!(!result.is_none());
     let result = result.as_ref().unwrap();
     assert!(!result.paths.is_empty());

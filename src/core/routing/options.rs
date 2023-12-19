@@ -19,7 +19,7 @@ pub enum WeightType {
 /// Plan a route given a start and end node
 /// start and end must be a valid node within graph
 pub trait RoutingAlgorithm<G: Graph> {
-    fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult>;
+    fn route(&self, graph: &G, start: usize, end: usize) -> Option<RoutingResult>;
 }
 
 pub struct RoutingAlgorithmOptions<G: Graph> {

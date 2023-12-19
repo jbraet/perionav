@@ -36,7 +36,7 @@ impl Path {
         self.edges.extend(edges);
     }
 
-    fn check_edges_valid(edges: &Vec<Rc<EdgeInformation>>, mut last_node: Option<i32>) {
+    fn check_edges_valid(edges: &Vec<Rc<EdgeInformation>>, mut last_node: Option<usize>) {
         for edge in edges {
             if let Some(last_node) = last_node {
                 let base_node = edge.get_base_node();
@@ -71,7 +71,7 @@ impl Path {
         format!("LINESTRING({})", res.join(","))
     }
 
-    pub fn get_nodes(&self) -> Vec<i32> {
+    pub fn get_nodes(&self) -> Vec<usize> {
         let mut ret = vec![];
         let mut start = true;
 

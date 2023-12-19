@@ -17,15 +17,15 @@ pub struct DijkstraRoutingAlgorithm {
 }
 
 struct AlgorithmData {
-    distances: HashMap<i32, f64>,
-    used: HashSet<i32>,
+    distances: HashMap<usize, f64>,
+    used: HashSet<usize>,
     heap: BinaryHeap<Rc<HeapEntry>>,
     current_heap_entry: Rc<HeapEntry>,
 }
 
 impl AlgorithmData {
-    pub fn new(start: i32) -> AlgorithmData {
-        let mut distances: HashMap<i32, f64> = HashMap::new();
+    pub fn new(start: usize) -> AlgorithmData {
+        let mut distances: HashMap<usize, f64> = HashMap::new();
         distances.insert(start, 0.0);
 
         let used = HashSet::new();
@@ -44,7 +44,7 @@ impl AlgorithmData {
 }
 
 impl<G: Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm {
-    fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult> {
+    fn route(&self, graph: &G, start: usize, end: usize) -> Option<RoutingResult> {
         let AlgorithmData {
             mut distances,
             mut used,

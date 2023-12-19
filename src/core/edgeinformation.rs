@@ -4,14 +4,14 @@ use std::rc::Rc;
 
 //represents a directed version of an edge. By using the adj node we can easily get a direction of the edge
 pub struct EdgeInformation {
-    base_node: i32,
-    adj_node: i32,
+    base_node: usize,
+    adj_node: usize,
 
     _edge_info: Rc<DirectedVehicleSpecificEdgeInformation>,
 }
 
 impl EdgeInformation {
-    pub fn new(base_node: i32, adj_node: i32, edge_info: Rc<DirectedVehicleSpecificEdgeInformation>) -> Self {
+    pub fn new(base_node: usize, adj_node: usize, edge_info: Rc<DirectedVehicleSpecificEdgeInformation>) -> Self {
         EdgeInformation {
             base_node,
             adj_node,
@@ -19,11 +19,11 @@ impl EdgeInformation {
         }
     }
 
-    pub fn get_base_node(&self) -> i32 {
+    pub fn get_base_node(&self) -> usize {
         self.base_node
     }
 
-    pub fn get_adj_node(&self) -> i32 {
+    pub fn get_adj_node(&self) -> usize {
         self.adj_node
     }
 }

@@ -21,7 +21,7 @@ struct AlgorithmData {
     stack: Vec<usize>,
 
     nodes: HashMap<usize, AlgorithmNode>,
-    components: Vec<HashSet<i32>>, //actual return value
+    components: Vec<HashSet<usize>>, //actual return value
 }
 
 enum State {
@@ -69,18 +69,18 @@ impl AlgorithmData {
             }
         };
 
-        graph.do_for_all_neighbors(node_index as i32, false, |adj_node| {
-            if !self.nodes.contains_key(&(adj_node as usize)) {
-                self.strongconnect_recursive(graph, adj_node as usize);
+        graph.do_for_all_neighbors(node_index, false, |adj_node| {
+            if !self.nodes.contains_key(&(adj_node)) {
+                self.strongconnect_recursive(graph, adj_node);
 
-                let w_low_link = self.nodes.get(&(adj_node as usize)).unwrap().low_link;
+                let w_low_link = self.nodes.get(&(adj_node)).unwrap().low_link;
                 let v = self.nodes.get_mut(&node_index).unwrap();
 
                 if w_low_link < v.low_link {
                     v.low_link = w_low_link;
                 }
             } else {
-                let w = self.nodes.get(&(adj_node as usize)).unwrap();
+                let w = self.nodes.get(&(adj_node)).unwrap();
                 let w_index = w.index;
                 let w_on_stack = w.on_stack;
 
@@ -104,7 +104,7 @@ impl AlgorithmData {
                     w.on_stack = false;
                 }); //if it doesn't exist then there is nothing to do, also it shouldn't happen
 
-                component.insert(w_index as i32);
+                component.insert(w_index);
                 w_index != node_index
             };
             while self.stack.pop().is_some_and(&mut test_function) {}
@@ -126,12 +126,12 @@ impl AlgorithmData {
 
                     stack.push((current_node_index, State::AllNeighborsVisited)); // we will come back to this once all others are explored
 
-                    graph.do_for_all_neighbors(current_node_index as i32, false, |adj_node| {
-                        if !self.nodes.contains_key(&(adj_node as usize)) {
-                            stack.push((current_node_index, State::SingleNeighborVisited(adj_node as usize)));
-                            stack.push((adj_node as usize, State::Initial));
+                    graph.do_for_all_neighbors(current_node_index, false, |adj_node| {
+                        if !self.nodes.contains_key(&(adj_node)) {
+                            stack.push((current_node_index, State::SingleNeighborVisited(adj_node)));
+                            stack.push((adj_node, State::Initial));
                         } else {
-                            stack.push((current_node_index, State::UpdateLowLinks(adj_node as usize)));
+                            stack.push((current_node_index, State::UpdateLowLinks(adj_node)));
                         }
                     });
                 }
@@ -145,7 +145,7 @@ impl AlgorithmData {
                                 w.on_stack = false;
                             }); //if it doesn't exist then there is nothing to do, also it shouldn't happen
 
-                            component.insert(w_index as i32);
+                            component.insert(w_index);
                             w_index != current_node_index
                         };
                         while self.stack.pop().is_some_and(&mut test_function) {}
@@ -200,7 +200,7 @@ impl AlgorithmData {
 }
 
 impl<G: Graph> ComponentsAlgorithm<G> for TarjanComponentsAlgorithm {
-    fn get_components(&self, graph: &G) -> Vec<HashSet<i32>> {
+    fn get_components(&self, graph: &G) -> Vec<HashSet<usize>> {
         let mut algorithm_data = AlgorithmData::new();
 
         for i in 0..graph.get_nr_nodes() {

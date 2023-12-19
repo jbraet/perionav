@@ -7,7 +7,7 @@ use crate::core::edgeinformation::EdgeInformation;
 
 pub struct HeapEntry {
     pub key: NotNan<f64>, // distance from start/end
-    pub value: i32,       // node
+    pub value: usize,     // node
     pub parent: Option<Rc<HeapEntry>>,
     pub edge: Option<Rc<EdgeInformation>>, //only relevant when parent isn't None
 }
@@ -34,8 +34,8 @@ impl Ord for HeapEntry {
 
 pub fn create_edge_information(
     edge_info: Rc<DirectedVehicleSpecificEdgeInformation>,
-    base_node: i32,
-    adj_node: i32,
+    base_node: usize,
+    adj_node: usize,
     reverse: bool,
 ) -> Option<Rc<EdgeInformation>> {
     if reverse {
@@ -47,7 +47,7 @@ pub fn create_edge_information(
 
 impl HeapEntry {
     /// key must be nonNaN
-    pub fn new(key: f64, value: i32, edge_information: Option<Rc<EdgeInformation>>, parent: Option<Rc<HeapEntry>>) -> Self {
+    pub fn new(key: f64, value: usize, edge_information: Option<Rc<EdgeInformation>>, parent: Option<Rc<HeapEntry>>) -> Self {
         let notnan_key = NotNan::new(key).expect("given key is NAN");
 
         HeapEntry {

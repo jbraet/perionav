@@ -18,14 +18,14 @@ pub struct DijkstraRoutingAlgorithm2 {
 
 //we need to use refcell because otherwise we aren't able to change the deleted field inside the Rc<HeapEntry>
 struct AlgorithmData {
-    distances: HashMap<i32, Rc<RefCell<HeapEntry>>>,
+    distances: HashMap<usize, Rc<RefCell<HeapEntry>>>,
     heap: BinaryHeap<Rc<RefCell<HeapEntry>>>,
     current_heap_entry: Rc<RefCell<HeapEntry>>,
 }
 
 impl AlgorithmData {
-    pub fn new(start: i32) -> AlgorithmData {
-        let mut distances: HashMap<i32, Rc<RefCell<HeapEntry>>> = HashMap::new();
+    pub fn new(start: usize) -> AlgorithmData {
+        let mut distances: HashMap<usize, Rc<RefCell<HeapEntry>>> = HashMap::new();
         let mut heap = BinaryHeap::new();
 
         let current_heap_entry = Rc::new(RefCell::new(HeapEntry::new_without_parent(0.0, start)));
@@ -41,7 +41,7 @@ impl AlgorithmData {
 }
 
 impl<G: Graph> RoutingAlgorithm<G> for DijkstraRoutingAlgorithm2 {
-    fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult> {
+    fn route(&self, graph: &G, start: usize, end: usize) -> Option<RoutingResult> {
         let AlgorithmData {
             mut distances,
             mut heap,

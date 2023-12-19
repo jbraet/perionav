@@ -46,8 +46,8 @@ fn main() {
         //used for some debugging
         if component.len() > 20 && component.len() < 5000 {
             println!("component has size {}", component.len());
-            /*let visualisation = g.visualise_sub_graph(&component);
-            println!("{}",visualisation);*/
+            let visualisation = g.visualise_sub_graph(&component);
+            println!("{}",visualisation);
         }
 
         if component.len() > max_size {
@@ -89,7 +89,7 @@ fn main() {
 }
 
 //TODO move this to somewhere more sensical
-fn find_closest_node(kdtree: &KdTree<f64, i32, [f64; 2]>, lat: f64, lon: f64) -> i32 {
+fn find_closest_node(kdtree: &KdTree<f64, usize, [f64; 2]>, lat: f64, lon: f64) -> usize {
     let kd_nodes = kdtree.nearest(&[lat, lon], 1, &squared_euclidean).unwrap();
     *kd_nodes[0].1
 }

@@ -6,7 +6,7 @@ use perionav::core::StandardGraph;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
-pub fn create_random_graph(nodes: i32, edges: i32) -> impl Graph {
+pub fn create_random_graph(nodes: usize, edges: usize) -> impl Graph {
     let mut g = StandardGraph::new(100);
 
     let prob_one_way = 0.2;

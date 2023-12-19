@@ -42,7 +42,7 @@ impl<'a> OsmReader<'a> {
         let mut g = StandardGraph::new(self.nr_useful_nodes);
         let mut curr_node_index = 0; //the index inside the graph
 
-        let mut nodes_map = HashMap::new();
+        let mut nodes_map: HashMap<i64, usize> = HashMap::new();
         let mut nr_ways = 0;
 
         // ways always come after nodes
@@ -53,32 +53,29 @@ impl<'a> OsmReader<'a> {
                 let (car_fwd, car_bwd) = self.way_permissions.get(&way.id()).unwrap_or(&(false, false));
 
                 if *car_fwd || *car_bwd {
-                    let mut last_node = -1;
+                    let mut last_node: isize = -1;
                     let mut last_location = Location::new(0, 0);
                     let mut curr_location = Location::new(0, 0);
 
                     for node_id in way.refs() {
-                        let curr_node = *nodes_map.get(&node_id).unwrap_or(&-1);
+                        if let Some(&curr_node) = nodes_map.get(&node_id) {
+                            if let Some(n) = g.get_node(curr_node) {
+                                curr_location = Location::new(n.lat, n.lon);
+                            }
 
-                        let n = g.get_node(curr_node);
-                        if let Some(n) = n {
-                            curr_location = Location::new(n.lat, n.lon);
-                        }
+                            if !self.node_types.get(&node_id).is_some_and(|x| matches!(x, NodeType::TowerNode)) {
+                                continue;
+                            }
 
-                        if last_node == -1 && self.node_types.get(&node_id).is_some_and(|x| matches!(x, NodeType::TowerNode)) {
-                            last_node = curr_node;
-                            last_location = curr_location;
+                            if last_node >= 0 {
+                                //cast to usize is safe
+                                let dist = last_location.distance_to(&curr_location).unwrap().meters();
 
-                            continue;
-                        }
+                                let edge = Edge::new(dist, *car_fwd, *car_bwd);
+                                g.add_edge(last_node as usize, curr_node, edge);
+                            }
 
-                        if last_node != -1 && curr_node != -1 && self.node_types.get(&node_id).is_some_and(|x| matches!(x, NodeType::TowerNode)) {
-                            let dist = last_location.distance_to(&curr_location).unwrap().meters();
-
-                            let edge = Edge::new(dist, *car_fwd, *car_bwd);
-                            g.add_edge(last_node, curr_node, edge);
-
-                            last_node = curr_node;
+                            last_node = curr_node as isize;
                             last_location = curr_location;
                         }
                     }

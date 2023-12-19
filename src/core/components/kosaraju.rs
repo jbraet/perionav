@@ -9,13 +9,13 @@ pub struct KosarajuComponentsAlgorithm {}
 //we create 2 algorithm data structs, because we need a reference to the first while doing a mut function on the second.
 //which is impossible if this is in one struct, but it does work when its split up
 struct AlgorithmData {
-    visited: HashSet<i32>,
-    nodes_list: Vec<i32>,
+    visited: HashSet<usize>,
+    nodes_list: Vec<usize>,
 }
 
 struct AlgorithmDataPart2 {
-    components: Vec<HashSet<i32>>, //actual return value
-    is_in_component: HashSet<i32>, //if a vertex is in the component
+    components: Vec<HashSet<usize>>, //actual return value
+    is_in_component: HashSet<usize>, //if a vertex is in the component
 }
 
 impl AlgorithmDataPart2 {
@@ -26,7 +26,7 @@ impl AlgorithmDataPart2 {
         }
     }
 
-    fn create_component(&mut self, graph: &impl Graph, start_node: i32) {
+    fn create_component(&mut self, graph: &impl Graph, start_node: usize) {
         let mut component = HashSet::new();
 
         let mut stack = Vec::new();
@@ -54,7 +54,7 @@ impl AlgorithmData {
         }
     }
 
-    fn visit(&mut self, graph: &impl Graph, start_node: i32) {
+    fn visit(&mut self, graph: &impl Graph, start_node: usize) {
         let mut stack = Vec::new();
         stack.push((start_node, true)); //boolean is whether or not we should visit the neighbors
 
@@ -77,13 +77,12 @@ impl AlgorithmData {
 }
 
 impl<G: Graph> ComponentsAlgorithm<G> for KosarajuComponentsAlgorithm {
-    fn get_components(&self, graph: &G) -> Vec<HashSet<i32>> {
+    fn get_components(&self, graph: &G) -> Vec<HashSet<usize>> {
         let mut algorithm_data = AlgorithmData::new();
 
         for i in 0..graph.get_nr_nodes() {
-            let index = i as i32;
-            if !algorithm_data.visited.contains(&index) {
-                algorithm_data.visit(graph, index);
+            if !algorithm_data.visited.contains(&i) {
+                algorithm_data.visit(graph, i);
             }
         }
 

@@ -8,7 +8,7 @@ use rstest::rstest;
 
 mod create_graph;
 
-fn assert_component_sizes(components: Vec<HashSet<i32>>, expected: Vec<usize>) {
+fn assert_component_sizes(components: Vec<HashSet<usize>>, expected: Vec<usize>) {
     let mut sizes = vec![];
     for component in components {
         sizes.push(component.len())
@@ -18,7 +18,7 @@ fn assert_component_sizes(components: Vec<HashSet<i32>>, expected: Vec<usize>) {
     assert_eq!(sizes, expected);
 }
 
-fn assert_components_equal(components1: &Vec<HashSet<i32>>, components2: &Vec<HashSet<i32>>) {
+fn assert_components_equal(components1: &Vec<HashSet<usize>>, components2: &Vec<HashSet<usize>>) {
     let mut sizes1 = vec![];
     for component in components1 {
         sizes1.push(component.len())

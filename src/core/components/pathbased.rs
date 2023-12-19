@@ -9,13 +9,13 @@ use super::options::ComponentsAlgorithm;
 pub struct PathBasedComponentsAlgorithm {}
 
 struct AlgorithmData {
-    current_components_stack: Vec<i32>, // S in the description; all vertexes in the preorder order. This is used to construct the final components
-    cycles_stack: Vec<i32>,             // P in the description; a stack that tries to detect a strongly connected component
+    current_components_stack: Vec<usize>, // S in the description; all vertexes in the preorder order. This is used to construct the final components
+    cycles_stack: Vec<usize>,             // P in the description; a stack that tries to detect a strongly connected component
     //if P finds a cycle it gets popped off, however the relevant vertexes still stay on S. If P ends on the node it started then we have an actual strongly subcomponent that couldn't have been bigger, so we add it to the result
-    preorder_number: i32,
-    preorder_numbers: HashMap<i32, i32>, //preorder number
-    is_in_component: HashSet<i32>,       //if a vertex is in the component
-    components: Vec<HashSet<i32>>,       //actual return value
+    preorder_number: usize,
+    preorder_numbers: HashMap<usize, usize>, //preorder number
+    is_in_component: HashSet<usize>,         //if a vertex is in the component
+    components: Vec<HashSet<usize>>,         //actual return value
 }
 
 impl AlgorithmData {
@@ -42,7 +42,7 @@ impl PathBasedComponentsAlgorithm {
         PathBasedComponentsAlgorithm {}
     }
 
-    fn determine_components_from_node(&self, algorithm_data: &mut AlgorithmData, graph: &impl Graph, start_index: i32) {
+    fn determine_components_from_node(&self, algorithm_data: &mut AlgorithmData, graph: &impl Graph, start_index: usize) {
         let mut stack = Vec::new();
         stack.push((start_index, true)); //boolean is whether or not we should visit the neighbors
                                          //after visiting a node, the same node will be pushed with false, so that it can be handled after all of the subtree of the current node is handled
@@ -89,13 +89,12 @@ impl PathBasedComponentsAlgorithm {
 }
 
 impl<G: Graph> ComponentsAlgorithm<G> for PathBasedComponentsAlgorithm {
-    fn get_components(&self, graph: &G) -> Vec<HashSet<i32>> {
+    fn get_components(&self, graph: &G) -> Vec<HashSet<usize>> {
         let mut algorithm_data = AlgorithmData::new();
 
         for i in 0..graph.get_nr_nodes() {
-            let index = i as i32;
-            if !algorithm_data.is_in_component.contains(&index) {
-                self.determine_components_from_node(&mut algorithm_data, graph, index)
+            if !algorithm_data.is_in_component.contains(&i) {
+                self.determine_components_from_node(&mut algorithm_data, graph, i)
             }
         }
 

@@ -15,8 +15,8 @@ use std::rc::Rc;
 //since we will assume the graph is (nearly (before the filtering)) strongly connected we can assume that each node will have at least one edge to another node
 pub struct StandardGraph {
     nodes: Vec<Node>,
-    neighbors: Vec<HashMap<i32, Rc<Edge>>>,         //node index to coinciding edges
-    reverse_neighbors: Vec<HashMap<i32, Rc<Edge>>>, //probably not the most efficient implementation, but create a graph2 and benchmark
+    neighbors: Vec<HashMap<usize, Rc<Edge>>>,         //node index to coinciding edges
+    reverse_neighbors: Vec<HashMap<usize, Rc<Edge>>>, //probably not the most efficient implementation, but create a graph2 and benchmark
 }
 
 impl Default for StandardGraph {
@@ -47,8 +47,8 @@ impl Graph for StandardGraph {
         }
     }
 
-    fn add_edge(&mut self, base_node: i32, adj_node: i32, edge: Edge) {
-        assert!((base_node as usize) < self.nodes.len() && (adj_node as usize) < self.nodes.len());
+    fn add_edge(&mut self, base_node: usize, adj_node: usize, edge: Edge) {
+        assert!((base_node) < self.nodes.len() && (adj_node) < self.nodes.len());
 
         let fwd = edge.is_forward(super::edge::VehicleTypes::Car);
         let bwd = edge.is_backward(super::edge::VehicleTypes::Car);
@@ -57,19 +57,19 @@ impl Graph for StandardGraph {
         let rc_edge = Rc::new(edge);
 
         if fwd {
-            self.neighbors[base_node as usize].insert(adj_node, Rc::clone(&rc_edge));
-            self.reverse_neighbors[adj_node as usize].insert(base_node, Rc::clone(&reverse_edge));
+            self.neighbors[base_node].insert(adj_node, Rc::clone(&rc_edge));
+            self.reverse_neighbors[adj_node].insert(base_node, Rc::clone(&reverse_edge));
         }
 
         if bwd {
-            self.neighbors[adj_node as usize].insert(base_node, Rc::clone(&reverse_edge));
-            self.reverse_neighbors[base_node as usize].insert(adj_node, Rc::clone(&rc_edge));
+            self.neighbors[adj_node].insert(base_node, Rc::clone(&reverse_edge));
+            self.reverse_neighbors[base_node].insert(adj_node, Rc::clone(&rc_edge));
         }
     }
 
-    fn keep_nodes(&mut self, nodes: &HashSet<i32>) {
+    fn keep_nodes(&mut self, nodes: &HashSet<usize>) {
         let mut index = 0;
-        let mut remaining_index = 0_i32;
+        let mut remaining_index = 0_usize;
         let mut nodes_map = HashMap::new(); //key>=value
 
         self.nodes.retain(|_| {
@@ -84,16 +84,18 @@ impl Graph for StandardGraph {
             ret
         });
 
-        let mut index = -1;
+        let mut index = 0;
         self.neighbors.retain(|_| {
+            let ret = nodes.contains(&index);
             index += 1;
-            nodes.contains(&index)
+            ret
         });
 
-        let mut index = -1;
+        let mut index = 0;
         self.reverse_neighbors.retain(|_| {
+            let ret = nodes.contains(&index);
             index += 1;
-            nodes.contains(&index)
+            ret
         });
 
         for i in 0..self.nodes.len() {
@@ -130,17 +132,17 @@ impl Graph for StandardGraph {
         }
     }
 
-    fn get_node(&self, id: i32) -> Option<&Node> {
-        self.nodes.get(id as usize)
+    fn get_node(&self, id: usize) -> Option<&Node> {
+        self.nodes.get(id)
     }
 
-    fn do_for_all_neighbors<F>(&self, base_node: i32, reverse: bool, mut f: F)
+    fn do_for_all_neighbors<F>(&self, base_node: usize, reverse: bool, mut f: F)
     where
-        F: FnMut(i32),
+        F: FnMut(usize),
     {
         let relevant_neighbors = if reverse { &self.reverse_neighbors } else { &self.neighbors };
 
-        let neighbors = match relevant_neighbors.get(base_node as usize) {
+        let neighbors = match relevant_neighbors.get(base_node) {
             None => return, //there are no neighbors so do nothing
             Some(n) => n,
         };
@@ -152,13 +154,13 @@ impl Graph for StandardGraph {
 
     fn get_directed_vehicle_specific_edge_information(
         &self,
-        base_node: i32,
-        adj_node: i32,
+        base_node: usize,
+        adj_node: usize,
         reverse: bool,
     ) -> Option<Rc<DirectedVehicleSpecificEdgeInformation>> {
         let relevant_neighbors = if reverse { &self.reverse_neighbors } else { &self.neighbors };
 
-        relevant_neighbors.get(base_node as usize).and_then(|n| {
+        relevant_neighbors.get(base_node).and_then(|n| {
             n.get(&adj_node)
                 .and_then(|e| e.get_directed_vehicle_specific_edge_information(super::edge::VehicleTypes::Car, reverse))
         })
@@ -172,11 +174,11 @@ impl Graph for StandardGraph {
         self.neighbors.iter().fold(0, |acc, e| acc + e.len())
     }
 
-    fn route(&self, opts: &RoutingAlgorithmOptions<StandardGraph>, start: i32, end: i32) -> Option<RoutingResult> {
+    fn route(&self, opts: &RoutingAlgorithmOptions<StandardGraph>, start: usize, end: usize) -> Option<RoutingResult> {
         opts.routing_algorithm.route(self, start, end)
     }
 
-    fn get_strongly_connected_subgraphs(&self, opts: &ComponentsAlgorithmOptions<StandardGraph>) -> Vec<HashSet<i32>> {
+    fn get_strongly_connected_subgraphs(&self, opts: &ComponentsAlgorithmOptions<StandardGraph>) -> Vec<HashSet<usize>> {
         opts.components_algorithm.get_components(self)
     }
 }

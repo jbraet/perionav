@@ -10,7 +10,7 @@ use crate::core::edgeinformation::EdgeInformation;
 // however according to benchmarks this is actually slower
 pub struct HeapEntry {
     pub key: NotNan<f64>,
-    pub value: i32,
+    pub value: usize,
     pub parent: Option<Rc<RefCell<HeapEntry>>>,
     pub edge: Option<Rc<EdgeInformation>>, //only relevant when parent isn’t None
     pub deleted: bool,
@@ -38,7 +38,12 @@ impl Ord for HeapEntry {
 
 impl HeapEntry {
     /// key must be nonNaN
-    pub fn new(key: f64, value: i32, directed_edge_info: Rc<DirectedVehicleSpecificEdgeInformation>, parent: Option<Rc<RefCell<HeapEntry>>>) -> Self {
+    pub fn new(
+        key: f64,
+        value: usize,
+        directed_edge_info: Rc<DirectedVehicleSpecificEdgeInformation>,
+        parent: Option<Rc<RefCell<HeapEntry>>>,
+    ) -> Self {
         let edge_information = parent.as_ref().map(|p| {
             let base_node = p.borrow().value;
 
@@ -56,7 +61,7 @@ impl HeapEntry {
         }
     }
 
-    pub fn new_without_parent(key: f64, value: i32) -> Self {
+    pub fn new_without_parent(key: f64, value: usize) -> Self {
         let notnan_key = NotNan::new(key).expect("given key is NAN");
 
         HeapEntry {

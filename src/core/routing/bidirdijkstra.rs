@@ -28,11 +28,11 @@ pub struct BidirDijkstraRoutingAlgorithm {
 }
 
 struct SingleDirectionAlgorithmData {
-    distances: HashMap<i32, Rc<HeapEntry>>,
-    used: HashSet<i32>,
+    distances: HashMap<usize, Rc<HeapEntry>>,
+    used: HashSet<usize>,
     heap: BinaryHeap<Rc<HeapEntry>>,
     heap_entry: Rc<HeapEntry>, //the current top of the heap that we are considering
-    end: i32,
+    end: usize,
 }
 
 struct AlgorithmData {
@@ -48,7 +48,7 @@ struct BestData {
 }
 
 impl AlgorithmData {
-    pub fn new(start: i32, end: i32) -> AlgorithmData {
+    pub fn new(start: usize, end: usize) -> AlgorithmData {
         let mut forward_heap = BinaryHeap::new();
         let mut backward_heap = BinaryHeap::new();
 
@@ -58,9 +58,9 @@ impl AlgorithmData {
         let mut backward_heap_entry = Rc::new(HeapEntry::new(0.0, end, None, None));
         backward_heap.push(Rc::clone(&backward_heap_entry));
 
-        let mut forward_distances: HashMap<i32, Rc<HeapEntry>> = HashMap::new();
+        let mut forward_distances: HashMap<usize, Rc<HeapEntry>> = HashMap::new();
         forward_distances.insert(start, Rc::clone(&forward_heap_entry));
-        let mut backward_distances: HashMap<i32, Rc<HeapEntry>> = HashMap::new();
+        let mut backward_distances: HashMap<usize, Rc<HeapEntry>> = HashMap::new();
         backward_distances.insert(end, Rc::clone(&backward_heap_entry));
 
         let used_forward = HashSet::new();
@@ -193,7 +193,7 @@ impl BidirDijkstraRoutingAlgorithm {
 }
 
 impl<G: Graph> RoutingAlgorithm<G> for BidirDijkstraRoutingAlgorithm {
-    fn route(&self, graph: &G, start: i32, end: i32) -> Option<RoutingResult> {
+    fn route(&self, graph: &G, start: usize, end: usize) -> Option<RoutingResult> {
         let mut data = AlgorithmData::new(start, end);
 
         let mut finished_fwd = false;
@@ -216,7 +216,7 @@ impl<G: Graph> RoutingAlgorithm<G> for BidirDijkstraRoutingAlgorithm {
     }
 }
 
-fn extract_path(graph: &impl Graph, fwd: Option<Rc<HeapEntry>>, bwd: Option<Rc<HeapEntry>>, start: i32, end: i32) -> Path {
+fn extract_path(graph: &impl Graph, fwd: Option<Rc<HeapEntry>>, bwd: Option<Rc<HeapEntry>>, start: usize, end: usize) -> Path {
     let (fwd_edges, fwd_last_node) = match fwd {
         None => (vec![], start),
         Some(fwd_entry) => (fwd_entry.get_path(true), fwd_entry.value),
