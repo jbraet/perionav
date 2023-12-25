@@ -1,9 +1,5 @@
-#![allow(unused_imports)]
-#![allow(dead_code)]
-#![allow(unused_mut)]
-#![allow(unused_variables)]
-
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
+use perionav::core::components::options::{AlgorithmType as ComponentsAlgorithmType, ComponentsAlgorithmOptions};
 use perionav::core::routing::options::{AlgorithmType, RoutingAlgorithmOptions, WeightType};
 use perionav::core::Graph;
 
@@ -12,7 +8,7 @@ use rand::{Rng, SeedableRng};
 
 mod create_graph;
 
-fn criterion_benchmark(c: &mut Criterion) {
+fn routing_benchmark(c: &mut Criterion) {
     let nodes = 200000;
     let g = create_graph::create_random_graph(nodes, 4 * nodes);
     let opts = RoutingAlgorithmOptions::new(true, AlgorithmType::DIJKSTRA, WeightType::DISTANCE);
@@ -58,5 +54,24 @@ fn criterion_benchmark(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, criterion_benchmark);
+fn components_benchmark(c: &mut Criterion) {
+    let g = create_graph::create_flanders_graph();
+
+    let opts = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::PATHBASED);
+    let opts2 = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::KOSARAJU);
+    let opts3 = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::TARJAN);
+
+    let mut group = c.benchmark_group("Components");
+
+    group.bench_function("pathBased", |b| b.iter(|| g.get_strongly_connected_subgraphs(&opts)));
+
+    group.bench_function("Kosaraju", |b| b.iter(|| g.get_strongly_connected_subgraphs(&opts2)));
+
+    group.bench_function("Tarjan", |b| b.iter(|| g.get_strongly_connected_subgraphs(&opts3)));
+
+    group.finish();
+}
+
+criterion_group!(benches, routing_benchmark, components_benchmark);
+//criterion_group!(benches, components_benchmark); // only benchmark components
 criterion_main!(benches);

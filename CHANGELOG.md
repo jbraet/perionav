@@ -3,12 +3,13 @@
 ## v0.1.3
 
 ### Added
-- strongly connected subcomponents algorithms (TODO)
+- strongly connected subcomponents algorithms
 
 ## Changed
 - move routingoptions to routing::options
 - refactored edge implementation
 - rename algorithmOptions to RoutingAlgorithmOptions
+- replace node index by usize instead of i32
 
 ## v0.1.2
 

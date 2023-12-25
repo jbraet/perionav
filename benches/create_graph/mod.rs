@@ -3,8 +3,23 @@ use perionav::core::node::Node;
 use perionav::core::Graph;
 use perionav::core::StandardGraph;
 
+use perionav::reader::osm_reader::OsmReader;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
+
+pub fn create_flanders_graph() -> impl Graph {
+    let result = OsmReader::new("./data/flanders.osm.pbf");
+    let graph_reader = match result {
+        Ok(graph_reader) => graph_reader,
+        Err(e) => panic!("something went wrong while opening the osm file: {}", e),
+    };
+
+    let result = graph_reader.read_graph();
+    match result {
+        Ok(g) => g,
+        Err(e) => panic!("something went wrong while reading the osm file: {}", e),
+    }
+}
 
 pub fn create_random_graph(nodes: usize, edges: usize) -> impl Graph {
     let mut g = StandardGraph::new(100);
