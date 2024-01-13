@@ -1,12 +1,12 @@
-use std::{
-    collections::{hash_map::Entry, HashMap, HashSet},
-    fmt,
-};
+use std::{collections::HashSet, fmt};
 
 use crate::core::Graph;
 
 use super::options::ComponentsAlgorithm;
 
+/*
+this iterative implementation is created by myself
+*/
 pub struct TarjanComponentsAlgorithm {}
 
 #[derive(Debug)]
@@ -20,7 +20,7 @@ struct AlgorithmData {
     index: usize,
     stack: Vec<usize>,
 
-    nodes: HashMap<usize, AlgorithmNode>,
+    nodes: Vec<Option<Box<AlgorithmNode>>>,
     components: Vec<HashSet<usize>>, //actual return value
 }
 
@@ -43,49 +43,52 @@ impl fmt::Display for State {
 }
 
 impl AlgorithmData {
-    fn new() -> Self {
+    fn new(nr_nodes: usize) -> Self {
+        let mut nodes = Vec::with_capacity(nr_nodes);
+        nodes.resize_with(nr_nodes, || None);
+
         AlgorithmData {
             index: 0,
             stack: vec![],
-            nodes: HashMap::new(),
+            nodes,
             components: vec![],
         }
     }
 
     #[allow(dead_code)]
     fn strongconnect_recursive(&mut self, graph: &impl Graph, node_index: usize) {
-        match self.nodes.entry(node_index) {
-            Entry::Vacant(entry) => {
-                entry.insert(AlgorithmNode {
+        match self.nodes[node_index] {
+            None => {
+                self.nodes[node_index] = Some(Box::new(AlgorithmNode {
                     index: self.index,
                     low_link: self.index,
                     on_stack: true,
-                });
+                }));
                 self.index += 1;
                 self.stack.push(node_index);
             }
-            Entry::Occupied(_) => {
+            Some(_) => {
                 return; //means this node was explored before already
             }
         };
 
         graph.do_for_all_neighbors(node_index, false, |adj_node| {
-            if !self.nodes.contains_key(&(adj_node)) {
+            if self.nodes[adj_node].is_none() {
                 self.strongconnect_recursive(graph, adj_node);
 
-                let w_low_link = self.nodes.get(&(adj_node)).unwrap().low_link;
-                let v = self.nodes.get_mut(&node_index).unwrap();
+                let w_low_link = self.nodes[adj_node].as_ref().unwrap().low_link;
+                let v = self.nodes[node_index].as_mut().unwrap();
 
                 if w_low_link < v.low_link {
                     v.low_link = w_low_link;
                 }
             } else {
-                let w = self.nodes.get(&(adj_node)).unwrap();
+                let w = self.nodes[adj_node].as_ref().unwrap();
                 let w_index = w.index;
                 let w_on_stack = w.on_stack;
 
                 if w_on_stack {
-                    let v = self.nodes.get_mut(&node_index).unwrap();
+                    let v = self.nodes[node_index].as_mut().unwrap();
 
                     if w_index < v.low_link {
                         v.low_link = w_index;
@@ -95,14 +98,12 @@ impl AlgorithmData {
         });
 
         //we have to get v again because it might have changed in the meanwhile
-        let v = self.nodes.get(&node_index).unwrap();
+        let v = self.nodes[node_index].as_ref().unwrap();
         if v.low_link == v.index {
             let mut component = HashSet::new();
 
-            let mut test_function = |w_index| {
-                self.nodes.entry(w_index).and_modify(|w| {
-                    w.on_stack = false;
-                }); //if it doesn't exist then there is nothing to do, also it shouldn't happen
+            let mut test_function = |w_index: usize| {
+                self.nodes[w_index].as_mut().unwrap().on_stack = false;
 
                 component.insert(w_index);
                 w_index != node_index
@@ -127,7 +128,7 @@ impl AlgorithmData {
                     stack.push((current_node_index, State::AllNeighborsVisited)); // we will come back to this once all others are explored
 
                     graph.do_for_all_neighbors(current_node_index, false, |adj_node| {
-                        if !self.nodes.contains_key(&(adj_node)) {
+                        if self.nodes[adj_node].is_none() {
                             stack.push((current_node_index, State::SingleNeighborVisited(adj_node)));
                             stack.push((adj_node, State::Initial));
                         } else {
@@ -136,14 +137,12 @@ impl AlgorithmData {
                     });
                 }
                 State::AllNeighborsVisited => {
-                    let v = self.nodes.get(&current_node_index).unwrap();
+                    let v = self.nodes[current_node_index].as_ref().unwrap();
                     if v.low_link == v.index {
                         let mut component = HashSet::new();
 
-                        let mut test_function = |w_index| {
-                            self.nodes.entry(w_index).and_modify(|w| {
-                                w.on_stack = false;
-                            }); //if it doesn't exist then there is nothing to do, also it shouldn't happen
+                        let mut test_function = |w_index: usize| {
+                            self.nodes[w_index].as_mut().unwrap().on_stack = false;
 
                             component.insert(w_index);
                             w_index != current_node_index
@@ -154,20 +153,20 @@ impl AlgorithmData {
                     }
                 }
                 State::SingleNeighborVisited(adj_node) => {
-                    let w_low_link = self.nodes.get(&adj_node).unwrap().low_link;
-                    let v = self.nodes.get_mut(&current_node_index).unwrap();
+                    let w_low_link = self.nodes[adj_node].as_ref().unwrap().low_link;
+                    let v = self.nodes[current_node_index].as_mut().unwrap();
 
                     if w_low_link < v.low_link {
                         v.low_link = w_low_link;
                     }
                 }
                 State::UpdateLowLinks(adj_node) => {
-                    let w = self.nodes.get(&adj_node).unwrap();
+                    let w = self.nodes[adj_node].as_ref().unwrap();
                     let w_index = w.index;
                     let w_on_stack = w.on_stack;
 
                     if w_on_stack {
-                        let v = self.nodes.get_mut(&current_node_index).unwrap();
+                        let v = self.nodes[current_node_index].as_mut().unwrap();
 
                         if w_index < v.low_link {
                             v.low_link = w_index;
@@ -179,20 +178,20 @@ impl AlgorithmData {
     }
 
     fn add_node(&mut self, node_index: usize) -> bool {
-        match self.nodes.entry(node_index) {
-            Entry::Vacant(entry) => {
-                entry.insert(AlgorithmNode {
+        match self.nodes[node_index] {
+            None => {
+                self.nodes[node_index] = Some(Box::new(AlgorithmNode {
                     index: self.index,
                     low_link: self.index,
                     on_stack: true,
-                });
+                }));
 
                 self.index += 1;
                 self.stack.push(node_index);
 
                 false
             }
-            Entry::Occupied(_) => {
+            Some(_) => {
                 true //means this node was explored before already
             }
         }
@@ -201,10 +200,10 @@ impl AlgorithmData {
 
 impl<G: Graph> ComponentsAlgorithm<G> for TarjanComponentsAlgorithm {
     fn get_components(&self, graph: &G) -> Vec<HashSet<usize>> {
-        let mut algorithm_data = AlgorithmData::new();
+        let mut algorithm_data = AlgorithmData::new(graph.get_nr_nodes());
 
         for i in 0..graph.get_nr_nodes() {
-            if !algorithm_data.nodes.contains_key(&i) {
+            if algorithm_data.nodes[i].is_none() {
                 //algorithm_data.strongconnect_recursive(graph, i);
                 algorithm_data.strongconnect_iterative(graph, i);
             }

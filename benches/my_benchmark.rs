@@ -60,6 +60,7 @@ fn components_benchmark(c: &mut Criterion) {
     let opts = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::PATHBASED);
     let opts2 = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::KOSARAJU);
     let opts3 = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::TARJAN);
+    let opts4 = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::TARJAN2);
 
     let mut group = c.benchmark_group("Components");
 
@@ -68,6 +69,8 @@ fn components_benchmark(c: &mut Criterion) {
     group.bench_function("Kosaraju", |b| b.iter(|| g.get_strongly_connected_subgraphs(&opts2)));
 
     group.bench_function("Tarjan", |b| b.iter(|| g.get_strongly_connected_subgraphs(&opts3)));
+
+    group.bench_function("Tarjan2", |b| b.iter(|| g.get_strongly_connected_subgraphs(&opts4)));
 
     group.finish();
 }

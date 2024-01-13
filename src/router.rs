@@ -33,7 +33,7 @@ pub fn new_router(file_name: &str) -> Router<impl Graph> {
     println!("created graph in {} ms: nr edges={} & nr nodes={}", now.elapsed().as_millis(), graph.get_nr_edges(), graph.get_nr_nodes());
 
     let now = Instant::now();
-    let opts = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::PATHBASED);
+    let opts = ComponentsAlgorithmOptions::new(ComponentsAlgorithmType::TARJAN);
     let result = graph.get_strongly_connected_subgraphs(&opts);
     println!("got {} components in {} ms", result.len(), now.elapsed().as_millis());
 
