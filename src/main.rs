@@ -1,41 +1,8 @@
-use std::{marker::PhantomPinned, pin::Pin, ptr::NonNull, time::Instant};
+use std::time::Instant;
 
 mod router;
 
-/*pub struct Something {
-    number: usize,
-}
-
-pub struct Data {
-    something: Something,
-    reference: NonNull<Something>,
-    _pin: PhantomPinned,
-}
-
-impl<'data> Data {
-    pub fn new() -> Pin<&'data Self> {
-        let ret = Data { something: Something{number: 5}, reference: NonNull::dangling(), _pin: PhantomPinned};
-
-        let mut boxed = Box::pin(ret);
-        let reference = NonNull::from(&boxed.something);
-        // we know this is safe because modifying a field doesn't move the whole struct
-        unsafe {
-            let mut_ref: Pin<&mut Self> = Pin::as_mut(&mut boxed);
-            Pin::get_unchecked_mut(mut_ref).reference = reference;
-        }
-
-        boxed
-    }
-
-    pub fn increase_through_ref(mut self: Pin<&mut Self>) {
-        let field = unsafe { &mut self.get_unchecked_mut().something };
-    }
-}*/
-
 fn main() {
-    //let data = Data::new();
-    //data.increase_through_ref();
-
     let router = router::new_router("./data/germany-latest.osm.pbf");
 
     let (from_lat, from_lon) = (51.046527, 3.719028);
